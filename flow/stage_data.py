@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from domain.party import Party
-from domain.person import Person
+from entities.party import Party
+from entities.person import Person
 
 
 @dataclass
@@ -18,7 +18,6 @@ class StageData:
         который заполняется в process(), а отправляется уже FlowManager-ом.
     """
     chat_id: int
-    people: list[Person]
-    party: Party | None
-    pending_payload: dict[str, str] = field(default_factory=dict)
-    messages: list[str] = field(default_factory=list)
+    people: list[Person] = None
+    party: Party | None = None
+    payload: dict[str, str] = field(default_factory=dict)

@@ -1,7 +1,8 @@
 from app.people_ops import next_person_id, update_person_coeff, update_person_name
-from domain.party import Party
-from domain.person import Person
-from stage_data import StageData
+from db.db import get_people
+from entities.party import Party
+from entities.person import Person
+from flow.stage_data import StageData
 
 class BaseStageLogic:
     """
@@ -17,27 +18,23 @@ class BaseStageLogic:
     def preprocess(self, data: StageData) -> None:
         pass
 
-    def process(self, data: StageData, value: object | None = None) -> None:
+    def process(self, data: StageData) -> None:
         pass
 
 
-class EmptyStageLogic(BaseStageLogic):
-    pass
-
-
-
-class StartNewPartyLogic(BaseStageLogic):
-    def preprocess(self, data: StageData) -> None:
-        data.party = Party()
+class NewPartyLogic(BaseStageLogic):
+    def process(self, data: StageData) -> None:
+        if not data.party:
+            data.party = Party()
 
 
 class AddParticipantStageLogic(BaseStageLogic):
-    def process(self, data: StageData, value: object | None = None) -> None:
+    def process(self, data: StageData) -> None:
         if value is None:
             raise ValueError("Не передан id участника")
 
         person_id = int(value)
-        person = next((person for person in data.people if person.id == person_id), None)
+        person = next((person for person in data.people if person.person_id == person_id), None)
         if person is None:
             raise ValueError("Человек не найден")
 
