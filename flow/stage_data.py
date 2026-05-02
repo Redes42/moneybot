@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from entities.party import Party
 from entities.person import Person
@@ -20,4 +21,4 @@ class StageData:
     chat_id: int
     people: list[Person] = None
     party: Party | None = None
-    payload: dict[str, str] = field(default_factory=dict)
+    payload: dict[str, str | float | int | Decimal] = field(default_factory=dict)

@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from mako.testing.helpers import result_lines
+
 from entities.person import Person
 from entities.participant import Participant
 
@@ -19,13 +21,13 @@ class Party:
     participants: list[Participant] = field(default_factory=list)
 
     def add_participant(self, person: Person) -> bool:
-        if any(participant.person_id == person.person_id for participant in self.participants):
+        if any(participant.person_id == person.id for participant in self.participants):
             return False
         self.participants.append(
             Participant(
-                person_id=person.person_id,
+                person_id=person.id,
                 name=person.name,
-                coeff=person.coeff,
+                coeff=Decimal(str(person.coeff)),
             )
         )
         return True
@@ -36,14 +38,21 @@ class Party:
                 return participant
         raise ValueError("Участник не найден")
 
+    def clear(self):
+        self.participants = []
+
     @property
-    def people_count(self) -> int:
-        return len(self.participants)
+    def participant_count(self) -> int:
+        result: int = len(self.participants)
+        for participant in self.participants:
+            if participant.coeff >= Decimal('2.0'):
+                result += int(participant.coeff)-1
+        return result
 
     @property
     def total_payment(self) -> Decimal:
-        return sum((participant.payment for participant in self.participants), start=Decimal("0"))
+        return sum((participant.payment for participant in self.participants), start=Decimal('0'))
 
     @property
-    def total_coeff(self) -> float:
-        return sum(participant.coeff for participant in self.participants)
+    def total_coeff(self) -> Decimal:
+        return sum((participant.coeff for participant in self.participants), start=Decimal('0'))

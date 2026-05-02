@@ -27,19 +27,25 @@ def build_children_keyboard(stage: "SelectStage", data: StageData) -> types.Inli
 
 def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> types.InlineKeyboardMarkup:
     keyboard = types.InlineKeyboardMarkup(row_width=2)
-    for participant in data.party.participants:
+    for person in data.people:
+        person_id = {'participant_id': person.id}
         button_left = types.InlineKeyboardButton(
-            participant.with_coeff(),
-            callback_data='' # f'{Stages.DEFINE_PAYMENT}::{participant.person_id}'
+            text=person.with_coeff(),
+            callback_data=str(
+                {
+                    **person_id,
+                    'coeff': person.coeff
+                }
+            )
         )
         button_right = types.InlineKeyboardButton(
-            participant.without_coeff(),
-            callback_data='' # f'{Stages.DEFINE_COEFF}::{participant.person_id}'
+            person.without_coeff(),
+            callback_data=str(person_id)
         )
         keyboard.add(button_left, button_right)
     button = types.InlineKeyboardButton(
         '< Назад',
-        callback_data=Stages.NEW_PARTY
+        callback_data=stage.name
     )
     keyboard.add(button)
     return keyboard

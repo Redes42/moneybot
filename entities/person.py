@@ -11,7 +11,7 @@ class Person:
     - Нельзя случайно изменить имя или default coeff в произвольной части кода.
     - При редактировании создаётся новый объект через dataclasses.replace(...).
     """
-    person_id: int
+    id: int
     name: str
     coeff: float = 1.0
 

@@ -1,18 +1,15 @@
 from logic.stage_logic import (
     AddParticipantStageLogic,
     AddPersonLogic,
-    EditPersonCoeffLogic,
-    EditPersonNameLogic,
     SetCoeffLogic,
     SetPaymentLogic,
     NewPartyLogic,
 )
-from flow.stages import Stages, InputStage, SelectStage, Stage
-#from app.text_factories import input_coeff_text_factory, input_payment_text_factory, new_party_text_factory
+from flow.stages import Stages, InputStage, SelectStage
 from logic.keyboards import build_add_participant_keyboard, build_remove_participants_keyboard
-from logic.text_factories import get_user_name, get_added_people
+from logic.text_factories import get_user_name, get_participants, get_calc_result
 from flow.menu import Menu
-from flow.validators import NonEmptyStringValidator, NonNegativeDecimalValidator, PositiveFloatValidator
+from flow.validators import NonEmptyStringValidator, NonNegativeDecimalValidator
 
 
 def build_menu() -> Menu:
@@ -27,6 +24,7 @@ def build_menu() -> Menu:
         title='Главное меню',
         text='Выберите действие:',
         name=Stages.MAIN_MENU,
+        logic=NewPartyLogic()
     )
     edit_people = SelectStage(
         title='Редактирование базы людей',
@@ -45,14 +43,13 @@ def build_menu() -> Menu:
         title='Новая вечеринка',
         text='Начало расчёта - добавьте людей, определите для них коэффициент и затраченные суммы',
         name=Stages.NEW_PARTY,
-        logic=NewPartyLogic(),
     )
     add_participant = SelectStage(
         title='Добавить людей на вечеринку',
         text='Выберите ещё людей из сохранённого списка:',
         name=Stages.ADD_PARTICIPANT,
         logic=AddParticipantStageLogic(),
-        text_factory=get_added_people,
+        text_factory=get_participants,
         keyboard_builder=build_add_participant_keyboard,
     )
     define_coeff = InputStage(
@@ -61,14 +58,15 @@ def build_menu() -> Menu:
              'Обычно используется 100%, 200% нужны для семей из двух человек, 50 - для тех кто мало ел',
         name=Stages.DEFINE_COEFF,
         logic=SetCoeffLogic(),
-        validators=(PositiveFloatValidator(),),
+        validators=(NonNegativeDecimalValidator(),),
     )
     define_payment = InputStage(
         title='Укажите платёж участника:',
-        text='В формате дробного числа, например 123\\.56',
+        text='В формате дробного числа, например 123.56',
         name=Stages.DEFINE_PAYMENT,
         logic=SetPaymentLogic(),
         validators=(NonNegativeDecimalValidator(),),
+        clear_payload_on_success=True
     )
     remove_participant = SelectStage(
         title='Удаление участника вечеринки',
@@ -78,10 +76,9 @@ def build_menu() -> Menu:
         keyboard_builder = build_remove_participants_keyboard,
     )
     calc_result = SelectStage(
-        title='Итоговый расёт',
-        text='',
+        title='Итоговый расчёт',
+        text_factory=get_calc_result,
         name=Stages.CALC_RESULT,
-        logic=None,
     )
 
     start.children = (main_menu, )
@@ -96,6 +93,7 @@ def build_menu() -> Menu:
     calc_result.children = (main_menu, )
     edit_people.parent = main_menu
     edit_people.children = (add_person, remove_person)
+    calc_result.children = (main_menu, )
     # add_person, remove_person
 
     menu = Menu(
@@ -114,5 +112,9 @@ def build_menu() -> Menu:
             calc_result
         )
     )
+    for stage in menu.stages:
+        if not stage.default_child:
+            if isinstance(stage.children, tuple):
+                stage.default_child = stage.children[0]
     menu.html_escape()
     return menu

@@ -5,7 +5,7 @@ from enum import StrEnum
 from bot.safe_sender import send_safe_message
 from flow.stage_data import StageData
 from logic.keyboards import KeyboardBuilder, build_children_keyboard
-from logic.stage_logic import BaseStageLogic
+from logic.stage_logic import BaseStageLogic, PreprocessResult
 from logic.text_factories import TextFactory
 from flow.validators import BaseValidator
 
@@ -31,12 +31,15 @@ class Stage:
     name: str = ''
     parent: "Stage | None" = None
     children: tuple["Stage"] | None = None
+    default_child: "Stage | None" = None
     logic: BaseStageLogic | None = None
     text_factory: TextFactory | None = None
+    clear_payload_on_success: bool = False
 
-    def preprocess(self, data: StageData) -> None:
+    def preprocess(self, data: StageData) -> PreprocessResult:
         if self.logic:
-            self.logic.preprocess(data)
+            return self.logic.preprocess(data)
+        return PreprocessResult()
 
     def _build_text(self, data: StageData):
         msg = [f'<b>{escape(self.title)}:</b>']
@@ -77,9 +80,10 @@ class InputStage(Stage):
         try:
             for validator in self.validators:
                 current_value = validator.validate(current_value)
+            data.payload['value'] = current_value
         except ValueError as exc:
-            data.messages.append(str(exc))
+            send_safe_message(data.chat_id, str(exc))
             return False
         if self.logic:
-            self.logic.process(data, current_value)
+            self.logic.process(data)
         return True

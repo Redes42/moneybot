@@ -1,21 +1,99 @@
+from decimal import Decimal, ROUND_HALF_UP
 from html import escape
+from itertools import chain
 from typing import Callable, TypeAlias
 
 from bot import bot
+from entities.participant import Participant
 from flow.stage_data import StageData
+from logic.calc import calc_result, CalcResult, Party
 
 type TextFactory = Callable[[StageData], str]
-#TextFactory: TypeAlias = Callable[[StageData], str]
 
 def get_user_name(data: StageData) -> str:
     return escape(bot.get_chat(data.chat_id).first_name)
 
-def get_added_people(data: StageData) -> str:
-    added_people = '\n'
-    if data.people:
-        added_people = added_people.join(person.name for person in data.people)
+def get_participants(data: StageData) -> str:
+    participants = '\n'
+    if data.party.participants:
+        participants = participants.join(
+            participant.with_coeff_and_payment() for participant in data.party.participants
+        )
     else:
-        added_people += '\\-\\- никого \\-\\-'
-    added_people = escape(added_people)
-    return f'Уже добавлены:\n' + added_people + '\n\n'
+        participants += '-- никого --'
+    participants = escape(participants)
+    return f'Уже добавлены:\n' + participants + '\n\n'
 
+def get_calc_result(data: StageData) -> str:
+
+    def format_payment(payment: Decimal) -> Decimal:
+        return payment.quantize(Decimal('0.00'), ROUND_HALF_UP)
+
+
+    def get_payers(calc: CalcResult) -> chain[Participant]:
+        return chain(
+            calc.payments.over_payers,
+            calc.payments.lack_payers,
+            calc.payments.exact_payers
+        )
+
+    rub = 'руб.'
+    tab = '    '
+    result = 'Участники отсутствуют, расчёт невозможен! Добавьте участников.'
+    party = data.party
+    if not party.participants:
+        return result
+    calc: CalcResult = calc_result(party)
+
+    result = f'<b>Общая сумма:</b> {format_payment(party.total_payment)} {rub}\n'
+    result += f'<b>Количество человек</b>: {party.participant_count}\n'
+    result += f'<b>Средний платёж</b>: {format_payment(calc.avg_payment)} {rub}\n'
+
+    result += '<b>Расходы до расчётов</b>:\n'
+    payers = get_payers(calc)
+    for payer in payers:
+        pay_verb_form = 'заплатил(а)'
+        if payer.coeff >= 2:
+            pay_verb_form = 'заплатили'
+        payer_with_verb = f'{payer.name} {pay_verb_form} '
+        pay_sub_result = (
+            f'{payer_with_verb} {format_payment(payer.payment)} {rub} '
+            f'(на {abs(
+                format_payment(payer.payment - calc.avg_payment*payer.coeff)
+            )} {rub} '
+        )
+        if payer.payment > calc.avg_payment:
+            result += f'{tab}{pay_sub_result} больше)\n'
+        elif payer.payment < calc.avg_payment:
+            result += f'{tab}{pay_sub_result} меньше)\n'
+        elif payer.payment == calc.avg_payment:
+            result += (
+                f'{tab}{payer_with_verb} {format_payment(payer.payment)} '
+                '(ровно как надо)\n'
+            )
+        else:
+            result += f'{tab}{payer.name} ничего не {pay_verb_form}\n'
+
+    result += '\n<b>Необходимые переводы</b>:\n'
+    if not calc.final_pay:
+        result += f'{tab}Не требуются, все заплатили поровну\n'
+    for transaction in calc.final_pay:
+        if transaction.amount != Decimal('0.0'):
+            result += (
+                f'{tab}{transaction.sender.name} --> '
+                f'{transaction.recipient.name}: '
+                f'{format_payment(transaction.amount)} {rub}\n'
+            )
+
+    result += '\n<b>Расходы после расчётов</b>:\n'
+    payers = get_payers(calc)
+    for payer in payers:
+        pay_verb_form = 'заплатит'
+        if payer.coeff >= 2:
+            pay_verb_form = 'заплатят'
+        result += (
+            f'{tab}В итоге {payer.name} {pay_verb_form} '
+            f'{format_payment(calc.avg_payment*payer.coeff)} {rub}\n'
+        )
+
+    return result

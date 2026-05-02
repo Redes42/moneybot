@@ -19,8 +19,8 @@ class Participant:
     """
     person_id: int
     name: str
-    coeff: float = 1.0
-    payment: Decimal = Decimal("0")
+    coeff: Decimal = Decimal('1.0')
+    payment: Decimal = Decimal('0')
 
     def with_coeff(self):
         return f'{self.name} ({self.coeff})'
