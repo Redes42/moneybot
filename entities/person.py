@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+
 
 @dataclass(frozen=True)
 class Person:
@@ -15,8 +16,13 @@ class Person:
     name: str
     coeff: float = 1.0
 
-    def with_coeff(self):
-        return f'{self.name} ({self.coeff})'
+    @staticmethod
+    def format_coeff(coeff: float) -> Decimal:
+        decimal_coeff = Decimal(coeff)
+        return decimal_coeff.quantize(Decimal('0.0'), ROUND_HALF_UP)
 
-    def without_coeff(self):
+    def with_coeff(self) -> str:
+        return f'{self.name} ({Person.format_coeff(self.coeff)})'
+
+    def without_coeff(self) -> str:
         return f'{self.name} (?)'

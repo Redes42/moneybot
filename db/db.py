@@ -1,11 +1,28 @@
+from sqlalchemy import create_engine, event
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
 from entities.person import Person
 
+DATABASE_URL = 'sqlite:///moneybot.db'
 
-def get_people(chat_id: int) -> list[Person]:
-    return [
-        Person(id=1, name='Гоша'),
-        Person(id=2, name='Красновы', coeff=2.0),
-        Person(id=3, name='Кирилл'),
-        Person(id=4, name='Инфин'),
-    ]
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,
+    connect_args={'timeout': 30}
+)
 
+
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute('PRAGMA journal_mode=WAL')
+    cursor.execute('PRAGMA foreign_keys=ON')
+    cursor.close()
+
+
+SessionLocal = sessionmaker(bind=engine)
+
+
+class Base(DeclarativeBase):
+    pass

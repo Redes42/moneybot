@@ -45,8 +45,8 @@ class Party:
     def participant_count(self) -> int:
         result: int = len(self.participants)
         for participant in self.participants:
-            if participant.coeff >= Decimal('2.0'):
-                result += int(participant.coeff)-1
+            if participant.coeff >= Decimal('1.5'):
+                result += 1
         return result
 
     @property

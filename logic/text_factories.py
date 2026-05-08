@@ -53,7 +53,7 @@ def get_calc_result(data: StageData) -> str:
     payers = get_payers(calc)
     for payer in payers:
         pay_verb_form = 'заплатил(а)'
-        if payer.coeff >= 2:
+        if payer.coeff >= Decimal('1.5'):
             pay_verb_form = 'заплатили'
         payer_with_verb = f'{payer.name} {pay_verb_form} '
         pay_sub_result = (
@@ -64,7 +64,7 @@ def get_calc_result(data: StageData) -> str:
         )
         if payer.payment > calc.avg_payment:
             result += f'{tab}{pay_sub_result} больше)\n'
-        elif payer.payment < calc.avg_payment:
+        elif Decimal('0.0') < payer.payment < calc.avg_payment:
             result += f'{tab}{pay_sub_result} меньше)\n'
         elif payer.payment == calc.avg_payment:
             result += (
@@ -89,7 +89,7 @@ def get_calc_result(data: StageData) -> str:
     payers = get_payers(calc)
     for payer in payers:
         pay_verb_form = 'заплатит'
-        if payer.coeff >= 2:
+        if payer.coeff >= Decimal('1.5'):
             pay_verb_form = 'заплатят'
         result += (
             f'{tab}В итоге {payer.name} {pay_verb_form} '

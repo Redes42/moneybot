@@ -1,7 +1,7 @@
 from dataclasses import dataclass
+from decimal import Decimal
 
 from app.people_ops import update_person_coeff, update_person_name, get_person
-from db.db import get_people
 from entities.party import Party
 from entities.person import Person
 from flow.stage_data import StageData
@@ -59,7 +59,7 @@ class SetCoeffLogic(BaseStageLogic):
             raise ValueError('Не передано значение коэффициента')
         participant_id = data.payload['participant_id']
         participant = data.party.get_participant(participant_id)
-        participant.coeff = coeff
+        participant.coeff = Decimal(coeff)
 
 
 class SetPaymentLogic(BaseStageLogic):
@@ -69,7 +69,7 @@ class SetPaymentLogic(BaseStageLogic):
             raise ValueError('Не передано значение платежа')
         participant_id = data.payload['participant_id']
         participant = data.party.get_participant(participant_id)
-        participant.payment = payment
+        participant.payment = Decimal(payment)
 
 
 class AddPersonLogic(BaseStageLogic):

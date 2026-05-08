@@ -1,9 +1,9 @@
 import ast
 
-from telebot import types
+from telebot import types, TeleBot
 
 from bot.callback_codec import CallbackCodec
-from db.db import get_people
+from db.app import Users, Persons
 from entities.party import Party
 from entities.person import Person
 from flow.menu import Menu
@@ -14,10 +14,16 @@ from logic.stage_logic import PreprocessResult
 
 
 class FlowManager:
-    def __init__(self, bot, menu: Menu):
+    def __init__(self, bot: TeleBot, menu: Menu):
         self.bot = bot
         self.menu = menu
         self.sessions = dict()
+
+    def is_allowed_user(self, chat_id: int) -> bool:
+        user_db = Users.get_user(chat_id)
+        if user_db is None:
+            return False
+        return True
 
     def get_session(self, chat_id: int):
         if chat_id not in self.sessions:
@@ -25,7 +31,7 @@ class FlowManager:
                 chat_id=chat_id,
                 current_stage=self.menu.start_stage,
                 party=Party(),
-                people=get_people(chat_id)
+                people=list(Persons.get_persons(chat_id))
             )
         return self.sessions[chat_id]
 
@@ -56,7 +62,7 @@ class FlowManager:
         data = self._make_stage_data(session)
         stage = self.menu.get_stage_by_name(callback_data)
         if stage is None:
-            payload = ast.literal_eval(callback_data)
+            payload = CallbackCodec.decode_payload(callback_data)
             data.payload.update(payload)
         success = current_stage.process(data)
         if not success:
