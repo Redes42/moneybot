@@ -38,6 +38,11 @@ class Party:
                 return participant
         raise ValueError("Участник не найден")
 
+    def remove_participant(self, participant_id: int) -> bool:
+        participant = self.get_participant(participant_id)
+        self.participants.remove(participant)
+        return True
+
     def clear(self):
         self.participants = []
 

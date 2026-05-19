@@ -17,8 +17,8 @@ def register_handlers(bot: TeleBot, manager: FlowManager) -> None:
             manager.open_stage(session, manager.menu.start_stage)
         except ValueError as exc:
             send_safe_message(chat_id, str(exc))
-        except Exception:
-            send_safe_message(chat_id, 'Произошла внутренняя ошибка.')
+        except Exception as e:
+            send_safe_message(chat_id, f'Произошла внутренняя ошибка.\n{e}')
             raise
 
     @bot.callback_query_handler(func=lambda call: True)
@@ -29,8 +29,8 @@ def register_handlers(bot: TeleBot, manager: FlowManager) -> None:
             manager.handle_callback(chat_id, call.data)
         except ValueError as exc:
             send_safe_message(chat_id, str(exc))
-        except Exception:
-            send_safe_message(chat_id, 'Произошла внутренняя ошибка.')
+        except Exception as e:
+            send_safe_message(chat_id, f'Произошла внутренняя ошибка.\n{e}')
             raise
 
     @bot.message_handler()
@@ -40,6 +40,6 @@ def register_handlers(bot: TeleBot, manager: FlowManager) -> None:
             manager.handle_message(message)
         except ValueError as exc:
             send_safe_message(chat_id, str(exc))
-        except Exception:
-            send_safe_message(chat_id, 'Произошла внутренняя ошибка.')
+        except Exception as e:
+            send_safe_message(chat_id, f'Произошла внутренняя ошибка.\n{e}')
             raise

@@ -2,10 +2,9 @@ import ast
 
 from telebot import types, TeleBot
 
-from bot.callback_codec import CallbackCodec
+from flow.callback_codec import CallbackCodec
 from db.app import Users, Persons
 from entities.party import Party
-from entities.person import Person
 from flow.menu import Menu
 from flow.session import UserSession
 from flow.stage_data import StageData
@@ -55,6 +54,7 @@ class FlowManager:
 
 
     def handle_callback(self, chat_id: int, callback_data: str) -> None:
+        back = False
         session = self.get_session(chat_id)
         current_stage = session.current_stage
         if not isinstance(current_stage, SelectStage):
@@ -64,11 +64,16 @@ class FlowManager:
         if stage is None:
             payload = CallbackCodec.decode_payload(callback_data)
             data.payload.update(payload)
-        success = current_stage.process(data)
-        if not success:
-            return
-        if current_stage.clear_payload_on_success:
-            data.payload.clear()
+        else:
+            if current_stage.parent:
+                if current_stage.parent.name == stage.name:
+                    back = True
+        if not back:
+            success = current_stage.process(data)
+            if not success:
+                return
+            if current_stage.clear_payload_on_success:
+                data.payload.clear()
         if stage is not None:
             self.open_stage(session, stage)
         else:

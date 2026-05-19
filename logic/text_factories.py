@@ -24,7 +24,7 @@ def get_participants(data: StageData) -> str:
     participants = escape(participants)
     return f'Уже добавлены:\n' + participants + '\n\n'
 
-def get_calc_result(data: StageData) -> str:
+def get_full_calc_result(data: StageData) -> str:
 
     def format_payment(payment: Decimal) -> Decimal:
         return payment.quantize(Decimal('0.00'), ROUND_HALF_UP)

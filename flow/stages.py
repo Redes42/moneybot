@@ -12,14 +12,17 @@ from flow.validators import BaseValidator
 class Stages(StrEnum):
     START = 'start'
     MAIN_MENU = 'main_menu'
+    HELP = 'help'
     EDIT_PEOPLE = 'edit_people'
-    ADD_PERSON = 'add_person'
-    DEFINE_NAME = 'define_name'
+    ADD_PERSON_WITH_COEFF = 'add_person_with_coeff'
+    ADD_PERSON_WO_COEFF = 'add_person_wo_coeff'
+    DEFINE_PERSON_NAME = 'define_person_name'
+    DEFINE_PERSON_COEFF = 'define_person_coeff'
     REMOVE_PERSON = 'remove_person'
-    NEW_PARTY = 'new_party'
+    CURRENT_PARTY = 'current_party'
     ADD_PARTICIPANT = 'add_participant'
-    DEFINE_COEFF = 'define_coeff'
-    DEFINE_PAYMENT = 'define_payment'
+    DEFINE_PARTICIPANT_COEFF = 'define_participant_coeff'
+    DEFINE_PARTICIPANT_PAYMENT = 'define_participant_payment'
     REMOVE_PARTICIPANT = 'remove_participant'
     CALC_RESULT = 'calc_result'
 
@@ -62,6 +65,7 @@ class Stage:
 @dataclass(eq=False)
 class SelectStage(Stage):
     keyboard_builder: KeyboardBuilder | None = build_children_keyboard
+    button_caption: str | None = None
 
     def render_message(self, data: StageData):
         msg = self._build_text(data)

@@ -25,4 +25,4 @@ class Person:
         return f'{self.name} ({Person.format_coeff(self.coeff)})'
 
     def without_coeff(self) -> str:
-        return f'{self.name} (?)'
+        return f'{self.name} (без к-та)'

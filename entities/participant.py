@@ -26,7 +26,7 @@ class Participant:
         return f'{self.name} ({self.coeff})'
 
     def without_coeff(self):
-        return f'{self.name} (?)'
+        return f'{self.name} (без к-та)'
 
     def with_coeff_and_payment(self):
         return f'{self.name} ({self.coeff}, {self.payment} руб.)'

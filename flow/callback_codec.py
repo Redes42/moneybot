@@ -1,17 +1,21 @@
 import ast
 from decimal import Decimal
 
+from bot.safe_sender import send_safe_message
+
 CB_DELIMITER = '|'
 
 class CallbackCodec:
 
     encode_rules = {
+        'person_id': int,
         'participant_id': int,
         'coeff': str,
         'payment': str
     }
 
     decode_rules = {
+        'person_id': int,
         'participant_id': int,
         'coeff': Decimal,
         'payment': Decimal

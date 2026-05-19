@@ -47,7 +47,7 @@ def send_safe_message(
 
         return bot.send_message(
             chat_id,
-            "Не удалось отправить сообщение в Telegram.",
+            f'Не удалось отправить сообщение в Telegram\n {message}',
             reply_markup=None,
             parse_mode=None,
         )

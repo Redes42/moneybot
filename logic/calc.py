@@ -72,14 +72,3 @@ def calc_result(party: Party) -> CalcResult:
     return result
 
 
-
-# party = Party()
-# party.add_participant(Person(42, 'Имя'))
-# party.participants[-1].payment = Decimal('123')
-# party.add_participant(Person(43, 'Имя2'))
-# party.participants[-1].payment = Decimal('200')
-# party.add_participant(Person(44, 'Имя3'))
-# party.participants[-1].payment = Decimal('350')
-# print(calc_result(party))
-
-

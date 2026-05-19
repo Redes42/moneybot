@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from app.people_ops import update_person_coeff, update_person_name, get_person
-from entities.party import Party
+from db.app import Persons
 from entities.person import Person
 from flow.stage_data import StageData
 
@@ -28,7 +28,12 @@ class BaseStageLogic:
         pass
 
 
-class NewPartyLogic(BaseStageLogic):
+class SkipStageLogic(BaseStageLogic):
+    def preprocess(self, data: StageData) -> PreprocessResult:
+        return PreprocessResult(skip_current_stage=True)
+
+
+class ClearPartyLogic(BaseStageLogic):
     def process(self, data: StageData) -> None:
         if data.party:
             data.party.clear()
@@ -36,10 +41,10 @@ class NewPartyLogic(BaseStageLogic):
 
 class AddParticipantStageLogic(BaseStageLogic):
     def process(self, data: StageData) -> None:
-        if data.payload.get('participant_id') is None:
+        participant_id = data.payload.get('participant_id')
+        if participant_id is None:
             raise ValueError('Не передан id участника')
-        person_id = int(data.payload['participant_id'])
-        person = get_person(data.people, person_id)
+        person = get_person(data.people, int(participant_id))
         if person is None:
             raise ValueError('Человек не найден')
         success = data.party.add_participant(person)
@@ -72,30 +77,53 @@ class SetPaymentLogic(BaseStageLogic):
         participant.payment = Decimal(payment)
 
 
+class RemoveParticipantStageLogic(BaseStageLogic):
+    def process(self, data: StageData) -> None:
+        participant_id = data.payload.get('participant_id')
+        if participant_id is None:
+            raise ValueError('Не передан id участника')
+        success = data.party.remove_participant(int(participant_id))
+        if not success:
+            raise ValueError('Участник не найден!')
+
+
 class AddPersonLogic(BaseStageLogic):
-    def process(self, data: StageData, value: object | None = None) -> None:
-        if value is None:
-            raise ValueError("Имя не передано")
-
-        new_id = next_person_id(data.people)
-        data.people.append(Person(id=new_id, name=str(value), coeff=1.0))
+    def preprocess(self, data: StageData) -> PreprocessResult:
+        return PreprocessResult(skip_current_stage=True)
 
 
-class EditPersonNameLogic(BaseStageLogic):
-    def process(self, data: StageData, value: object | None = None) -> None:
-        if value is None:
-            raise ValueError("Имя не передано")
-
-        person_id = int(data.pending_payload["person_id"])
-        update_person_name(data.people, person_id, str(value))
-        data.pending_payload = {}
+class SetPersonNameLogic(BaseStageLogic):
+    def process(self, data: StageData) -> None:
+        name = data.payload.get('value')
+        if name is None:
+            raise ValueError('Не указано имя участника')
+        data.payload['name'] = name
 
 
-class EditPersonCoeffLogic(BaseStageLogic):
-    def process(self, data: StageData, value: object | None = None) -> None:
-        if value is None:
-            raise ValueError("Коэффициент не передан")
+class SetPersonCoeffLogic(BaseStageLogic):
+    def add_person(self, data: StageData):
+        if 'name' not in data.payload:
+            raise ValueError('Не указано имя участника')
+        person = Person(0, data.payload['name'], data.payload['coeff'])
+        person = Persons.create_person(data.chat_id, person)
+        data.people.append(person)
 
-        person_id = int(data.pending_payload["person_id"])
-        update_person_coeff(data.people, person_id, float(value))
-        data.pending_payload = {}
+    def preprocess(self, data: StageData) -> PreprocessResult:
+        if 'coeff' in data.payload:
+            self.add_person(data)
+            return PreprocessResult(skip_current_stage=True)
+        return PreprocessResult()
+
+    def process(self, data: StageData) -> None:
+        data.payload['coeff'] = data.payload.get('value')
+        self.add_person(data)
+
+
+class RemovePersonLogic(BaseStageLogic):
+    def process(self, data: StageData) -> None:
+        person_id = data.payload.get('person_id')
+        if person_id is None:
+            raise ValueError('Не указан id человека')
+        person = get_person(data.people, person_id)
+        data.people.remove(person)
+        Persons.delete_person(person)
