@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.people_ops import update_person_coeff, update_person_name, get_person
+from entities.people_ops import update_person_coeff, update_person_name, get_person
 from db.app import Persons
 from entities.person import Person
 from flow.stage_data import StageData

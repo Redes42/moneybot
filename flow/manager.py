@@ -1,14 +1,15 @@
-import ast
-
+import logging
 from telebot import types, TeleBot
 
+from bot.log import log
+from bot.safe_sender import send_safe_message
 from flow.callback_codec import CallbackCodec
 from db.app import Users, Persons
 from entities.party import Party
 from flow.menu import Menu
 from flow.session import UserSession
 from flow.stage_data import StageData
-from flow.stages import InputStage, SelectStage, Stage
+from flow.stages import InputStage, SelectStage, Stage, Stages
 from logic.stage_logic import PreprocessResult
 
 
@@ -43,12 +44,15 @@ class FlowManager:
         )
 
     def open_stage(self, session: UserSession, stage: Stage) -> None:
+        previous_session = session.current_stage
         session.current_stage = stage
         stage_data = self._make_stage_data(session)
+        log(logging.INFO, stage_data, previous_session, f'Opening stage {stage.name}')
         result: PreprocessResult = stage.preprocess(stage_data)
         if not result.skip_current_stage:
             prompt_data = self._make_stage_data(session)
             stage.render_message(prompt_data)
+
         else:
             self.open_stage(session, session.current_stage.default_child)
 
@@ -85,6 +89,14 @@ class FlowManager:
         session = self.get_session(chat_id)
         current_stage = session.current_stage
         if not isinstance(current_stage, InputStage):
+            stage_text = (
+                f'Вы сейчас находитесь на этапе "{current_stage.text}".\n'
+                f'Воспользуйтесь инструкциями, полученными выше'
+            )
+            send_safe_message(
+                chat_id,
+                f'Неизвестное сообщение.\n{stage_text}'
+            )
             return
         session.payload['value'] = text
         data = self._make_stage_data(session)

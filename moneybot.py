@@ -1,10 +1,12 @@
 from bot import bot
 from bot.handlers import register_handlers
+from bot.log import config_logger, log
 from flow.manager import FlowManager
-from menu_setup import build_menu
+from flow.menu_setup import build_menu
 
 
 def main() -> None:
+    config_logger()
     menu = build_menu()
     manager = FlowManager(bot=bot, menu=menu)
     register_handlers(bot, manager)
