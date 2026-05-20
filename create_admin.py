@@ -1,5 +1,4 @@
 from db.app import Users
-from db.db import SessionLocal
 
 
 chat_id: int = int(input('Введите id пользователя (чата): '))
