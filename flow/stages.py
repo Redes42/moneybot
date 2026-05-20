@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from html import escape
 from enum import StrEnum
+from typing import Optional
 
+from bot.log import error, info
 from bot.safe_sender import send_safe_message
 from flow.stage_data import StageData
 from logic.keyboards import KeyboardBuilder, build_children_keyboard
@@ -72,6 +74,7 @@ class SelectStage(Stage):
         keyboard = None
         if self.keyboard_builder:
             keyboard = self.keyboard_builder(self, data)
+            info(data, self, message='Built keyboard')
         send_safe_message(data.chat_id, msg, keyboard)
 
 
@@ -81,11 +84,14 @@ class InputStage(Stage):
 
     def process(self, data: StageData) -> bool:
         current_value = data.payload.get('value')
+        current_validator: Optional[BaseValidator] = None
         try:
             for validator in self.validators:
+                current_validator = validator
                 current_value = validator.validate(current_value)
             data.payload['value'] = current_value
         except ValueError as exc:
+            error(data, self, message=f'Validation error from {current_validator.__class__.__name__}')
             send_safe_message(data.chat_id, str(exc))
             return False
         if self.logic:

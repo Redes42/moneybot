@@ -10,7 +10,7 @@ class NonEmptyStringValidator(BaseValidator):
     def validate(self, value: object) -> str:
         result = str(value).strip()
         if not result:
-            raise ValueError("Пустая строка недопустима")
+            raise ValueError('Пустая строка недопустима')
         return result
 
 
@@ -20,7 +20,7 @@ class FloatValidator(BaseValidator):
         try:
             return float(normalized)
         except ValueError as exc:
-            raise ValueError("Введите корректное число") from exc
+            raise ValueError('Введите корректное число') from exc
 
 
 class PositiveFloatValidator(FloatValidator):

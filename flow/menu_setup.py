@@ -39,13 +39,13 @@ def build_menu() -> Menu:
         name=Stages.EDIT_PEOPLE,
     )
     add_person_with_coeff = SelectStage(
-        title='Добавить человека с коэффициентом',
+        title='Добавить человека с вводом коэффициента',
         text='Введите имя человека',
         name=Stages.ADD_PERSON_WITH_COEFF,
         logic=AddPersonLogic(),
     )
     add_person_wo_coeff = SelectStage(
-        title='Добавить человека без коэффициента',
+        title='Добавить человека с коэффициентом 1.0',
         text='Введите имя человека',
         name=Stages.ADD_PERSON_WO_COEFF,
         logic=AddPersonLogic(),
@@ -70,7 +70,8 @@ def build_menu() -> Menu:
         text='Выберите человека, которого необходимо удалить из базы',
         name=Stages.REMOVE_PERSON,
         logic=RemovePersonLogic(),
-        keyboard_builder=build_remove_person_keyboard
+        keyboard_builder=build_remove_person_keyboard,
+        clear_payload_on_success=True
     )
     current_party = SelectStage(
         title='Текущая вечеринка',

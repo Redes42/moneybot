@@ -1,6 +1,6 @@
 from bot import bot
 from bot.handlers import register_handlers
-from bot.log import config_logger, log
+from bot.log import config_logger
 from flow.manager import FlowManager
 from flow.menu_setup import build_menu
 

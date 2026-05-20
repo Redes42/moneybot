@@ -1,9 +1,9 @@
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Optional
 
 from flow.stage_data import StageData
-from flow.stages import Stage
 
 logger = logging.getLogger('party_money_bot')
 log_path = 'logs'
@@ -32,22 +32,26 @@ def config_logger():
         ]
     )
 
-def log(level: int, data: StageData | None = None, stage: Stage | None = None, message: str = '...'):
+def _log(level: int, data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+    if stage is None:
+        stage_name = None
+    else:
+        stage_name = stage.name
     log_info = {
         'chat_id': data.chat_id,
-        'stage': stage.name
+        'stage': stage_name
     }
     logger.log(level, message, extra=log_info)
 
-def info():
-    pass
+def info(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+    _log(logging.INFO, data, stage, message)
 
-def error():
-    pass
+def error(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+    _log(logging.ERROR, data, stage, message)
 
-def warning():
-    pass
+def warning(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+    _log(logging.WARNING, data, stage, message)
 
-def critical():
-    pass
+def critical(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+    _log(logging.CRITICAL, data, stage, message)
 

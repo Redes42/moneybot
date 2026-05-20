@@ -13,10 +13,10 @@ class Users:
         return User(user_db.chat_id)
 
     @staticmethod
-    def create_user(chat_id: int) -> User | None:
+    def create_user(chat_id: int, is_admin: bool = False) -> User | None:
         with SessionLocal() as session:
             try:
-                user_db = DBUser(chat_id=chat_id)
+                user_db = DBUser(chat_id=chat_id, is_admin=is_admin)
                 session.add(user_db)
                 session.commit()
                 session.refresh(user_db)
@@ -120,3 +120,6 @@ class Persons:
             session.delete(person_db)
             session.commit()
             return True
+
+
+Users.create_user(123, True)

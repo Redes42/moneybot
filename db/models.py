@@ -1,6 +1,6 @@
 #from __future__ import annotations
 
-from sqlalchemy import String, ForeignKey, UniqueConstraint, Numeric
+from sqlalchemy import String, ForeignKey, UniqueConstraint, Numeric, false
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.db import Base
@@ -10,6 +10,10 @@ class DBUser(Base):
     __tablename__ = 'users'
 
     chat_id: Mapped[int] = mapped_column(primary_key=True)
+    is_admin: Mapped[bool] = mapped_column(
+        default=False,
+        server_default=false()
+    )
     persons: Mapped[list['DBPerson']] = relationship(
         back_populates='user',
         cascade='all, delete-orphan',

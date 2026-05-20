@@ -1,11 +1,7 @@
-import logging
-from logging import INFO, WARNING, ERROR, CRITICAL
-
 from telebot import types, TeleBot
 
-from bot.log import log
+from bot.log import warning
 from bot.safe_sender import send_safe_message
-from db.app import Users
 from flow.manager import FlowManager
 from flow.stage_data import StageData
 from flow.stages import Stages
@@ -15,9 +11,8 @@ def register_handlers(bot: TeleBot, manager: FlowManager) -> None:
     @bot.message_handler(commands=[Stages.START])
     def start_handler(message):
         chat_id = message.chat.id
-        if not manager.is_allowed_user(chat_id)
-            log(
-                ERROR,
+        if not manager.is_allowed_user(chat_id):
+            warning(
                 data=StageData(chat_id=chat_id),
                 stage=manager.menu.start_stage,
                 message='Forbidden user'
