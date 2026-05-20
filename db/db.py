@@ -2,8 +2,6 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-from entities.person import Person
-
 DATABASE_URL = 'sqlite:///moneybot.db'
 
 engine = create_engine(

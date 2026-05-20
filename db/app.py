@@ -122,4 +122,3 @@ class Persons:
             return True
 
 
-Users.create_user(123, True)
