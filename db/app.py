@@ -1,10 +1,13 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, OperationalError
 
+from bot.log import info
 from db.db import SessionLocal
 from db.models import DBUser, DBPerson
 from entities.user import User
 from entities.person import Person
+from flow.stage_data import StageData
+
 
 class Users:
 
@@ -20,6 +23,10 @@ class Users:
                 session.add(user_db)
                 session.commit()
                 session.refresh(user_db)
+                info(
+                    StageData(0),
+                    message=f'Создан пользователь с chat_id={chat_id} (is_admin={is_admin})'
+                )
                 return Users.to_user_dto(user_db)
             except IntegrityError:
                 session.rollback()

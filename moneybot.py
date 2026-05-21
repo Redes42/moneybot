@@ -1,16 +1,15 @@
 from bot import bot
 from bot.handlers import register_handlers
 from bot.log import config_logger
-from db.app import Users
+import threading
+
+from flow.fake_server import run_health_server
 from flow.manager import FlowManager
 from flow.menu_setup import build_menu
 
 
 def main() -> None:
-    Users.create_user(234391861, True)
-    Users.create_user(56067311)
-    Users.create_user(236383171)
-    Users.create_user(787185302)
+    threading.Thread(target=run_health_server, daemon=True).start()
     config_logger()
     menu = build_menu()
     manager = FlowManager(bot=bot, menu=menu)
