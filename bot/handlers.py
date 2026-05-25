@@ -15,7 +15,7 @@ def register_handlers(bot: TeleBot, manager: FlowManager) -> None:
             warning(
                 data=StageData(chat_id=chat_id),
                 stage=manager.menu.start_stage,
-                message='Forbidden user'
+                message='User is not allowed'
             )
             return
         try:

@@ -1,26 +1,70 @@
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import Callable
 
 from telebot import types
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+from db.app import Users
 from flow.callback_codec import CallbackCodec
 from flow.stage_data import StageData
 
-type KeyboardBuilder = Callable[['SelectStage', StageData], types.InlineKeyboardMarkup | None]
+type KeyboardBuilder = Callable[['SelectStage', StageData], InlineKeyboardMarkup]
 
-def build_back_button(stage: 'SelectStage') -> types.InlineKeyboardButton:
-    return  types.InlineKeyboardButton(
+
+@dataclass
+class Choice:
+    key: str
+    text: str
+
+
+def build_back_button(stage: 'SelectStage') -> InlineKeyboardButton:
+    return InlineKeyboardButton(
         text='< Назад',
         callback_data=CallbackCodec.encode_stage(stage.parent)
     )
 
+def build_choices_keyboard(stage: 'SelectStage', data: StageData) ->  InlineKeyboardMarkup | None:
+    keyboard = InlineKeyboardMarkup()
+    choices = data.payload.get('choices')
+    if choices:
+        for choice in choices:
+            keyboard.add(
+                InlineKeyboardButton(
+                    text=choice.text,
+                    callback_data=CallbackCodec.encode_payload({choice.key: True}),
+                )
+            )
+    if stage.parent:
+        keyboard.add(build_back_button(stage))
+    return keyboard
 
-def build_children_keyboard(stage: 'SelectStage', data: StageData) -> types.InlineKeyboardMarkup | None:
-    keyboard = types.InlineKeyboardMarkup()
+
+def build_delete_user_keyboard(stage: 'SelectStage', data: StageData)-> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
+    users = Users.get_all_users()
+    for user in users:
+        if user.chat_id == data.user.chat_id:
+            continue
+        user_data = {'user_id': user.chat_id}
+        button = InlineKeyboardButton(
+            text=f'Пользователь {user.chat_id}',
+            callback_data=CallbackCodec.encode_payload(user_data)
+        )
+        keyboard.add(button)
+    if stage.parent:
+        keyboard.add(build_back_button(stage))
+    return keyboard
+
+
+def build_children_keyboard(stage: 'SelectStage', data: StageData) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
     if stage.children:
         for child in stage.children:
+            if child.admin_only and not data.user.is_admin:
+                continue
             keyboard.add(
-                types.InlineKeyboardButton(
+                InlineKeyboardButton(
                     text=child.button_caption,
                     callback_data=CallbackCodec.encode_stage(child),
                 )
@@ -29,15 +73,15 @@ def build_children_keyboard(stage: 'SelectStage', data: StageData) -> types.Inli
         keyboard.add(build_back_button(stage))
     return keyboard
 
-def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> types.InlineKeyboardMarkup:
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
+def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup(row_width=2)
     participant_ids = tuple(
         participant.person_id for participant in data.party.participants
     )
     for person in data.people:
         if person.id not in participant_ids:
             participant = {'participant_id': person.id}
-            button_left = types.InlineKeyboardButton(
+            button_left = InlineKeyboardButton(
                 text=person.with_coeff(),
                 callback_data=CallbackCodec.encode_payload(
                     {
@@ -46,7 +90,7 @@ def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> type
                     }
                 )
             )
-            button_right = types.InlineKeyboardButton(
+            button_right = InlineKeyboardButton(
                 person.without_coeff(),
                 callback_data=CallbackCodec.encode_payload(participant)
             )
@@ -55,15 +99,13 @@ def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> type
         keyboard.add(build_back_button(stage))
     return keyboard
 
-def build_remove_participant_keyboard(stage: 'SelectStage', data: StageData)-> types.InlineKeyboardMarkup:
-    keyboard = types.InlineKeyboardMarkup()
+def build_remove_participant_keyboard(stage: 'SelectStage', data: StageData)-> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
     for participant in data.party.participants:
         participant_data = {'participant_id': participant.person_id}
-        button = types.InlineKeyboardButton(
+        button = InlineKeyboardButton(
             text=participant.with_coeff_and_payment(),
-            callback_data=CallbackCodec.encode_payload(
-                participant_data
-            )
+            callback_data=CallbackCodec.encode_payload(participant_data)
         )
         keyboard.add(button)
     if stage.parent:
@@ -71,11 +113,11 @@ def build_remove_participant_keyboard(stage: 'SelectStage', data: StageData)-> t
     return keyboard
 
 
-def build_remove_person_keyboard(stage: 'SelectStage', data: StageData)-> types.InlineKeyboardMarkup:
-    keyboard = types.InlineKeyboardMarkup()
+def build_remove_person_keyboard(stage: 'SelectStage', data: StageData)-> InlineKeyboardMarkup:
+    keyboard = InlineKeyboardMarkup()
     for person in data.people:
         person_data = {'person_id': person.id}
-        button = types.InlineKeyboardButton(
+        button = InlineKeyboardButton(
             text=person.with_coeff(),
             callback_data=CallbackCodec.encode_payload(person_data)
         )

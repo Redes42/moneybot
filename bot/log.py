@@ -1,4 +1,5 @@
 import logging
+from itertools import chain
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
@@ -37,11 +38,18 @@ def _log(level: int, data: StageData | None = None, stage: Optional['Stage'] = N
         stage_name = None
     else:
         stage_name = stage.name
+    if data is None:
+        chat_id = None
+    else:
+        chat_id = data.user.chat_id
     log_info = {
-        'chat_id': data.chat_id,
+        'chat_id': chat_id,
         'stage': stage_name
     }
     logger.log(level, message, extra=log_info)
+
+def debug(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+    _log(logging.DEBUG, data, stage, message)
 
 def info(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
     _log(logging.INFO, data, stage, message)

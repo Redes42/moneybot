@@ -20,7 +20,16 @@ class FloatValidator(BaseValidator):
         try:
             return float(normalized)
         except ValueError as exc:
-            raise ValueError('Введите корректное число') from exc
+            raise ValueError('Введите корректное дробное число') from exc
+
+
+class IntValidator(BaseValidator):
+    def validate(self, value: object) -> int:
+        normalized = str(value).strip()
+        try:
+            return int(normalized)
+        except ValueError as exc:
+            raise ValueError('Введите корректное целое число') from exc
 
 
 class PositiveFloatValidator(FloatValidator):

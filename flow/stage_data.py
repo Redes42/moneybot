@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from decimal import Decimal
+from typing import Any
 
 from entities.party import Party
 from entities.person import Person
+from entities.user import User
 
 
 @dataclass
@@ -18,7 +20,8 @@ class StageData:
         (например, ошибки валидации или подтверждения),
         который заполняется в process(), а отправляется уже FlowManager-ом.
     """
-    chat_id: int
+    # chat_id: int
+    user: User
     people: list[Person] = None
     party: Party | None = None
-    payload: dict[str, str | float | int | Decimal] = field(default_factory=dict)
+    payload: dict[str, Any] = field(default_factory=dict)

@@ -3,10 +3,13 @@ from html import escape
 from enum import StrEnum
 from typing import Optional
 
-from bot.log import error, info
+from telebot.types import InlineKeyboardMarkup
+
+from bot.log import error, info, debug, warning
 from bot.safe_sender import send_safe_message
 from flow.stage_data import StageData
-from logic.keyboards import KeyboardBuilder, build_children_keyboard
+from logic.keyboards import KeyboardBuilder, build_children_keyboard, \
+    build_back_button
 from logic.stage_logic import BaseStageLogic, PreprocessResult
 from logic.text_factories import TextFactory
 from flow.validators import BaseValidator
@@ -14,6 +17,11 @@ from flow.validators import BaseValidator
 class Stages(StrEnum):
     START = 'start'
     MAIN_MENU = 'main_menu'
+    ADMIN_MENU = 'admin_menu'
+    CREATE_USER = 'create_user'
+    DEFINE_CHAT_ID = 'define_chat_id'
+    CHOOSE_IS_ADMIN = 'choose_is_admin'
+    DELETE_USER = 'delete_user'
     HELP = 'help'
     EDIT_PEOPLE = 'edit_people'
     ADD_PERSON_WITH_COEFF = 'add_person_with_coeff'
@@ -26,7 +34,8 @@ class Stages(StrEnum):
     DEFINE_PARTICIPANT_COEFF = 'define_participant_coeff'
     DEFINE_PARTICIPANT_PAYMENT = 'define_participant_payment'
     REMOVE_PARTICIPANT = 'remove_participant'
-    CALC_RESULT = 'calc_result'
+    CALC_RESULT_FULL = 'calc_result_full'
+    CALC_RESULT_SHORT = 'calc_result_short'
 
 
 @dataclass(eq=False)
@@ -40,6 +49,7 @@ class Stage:
     logic: BaseStageLogic | None = None
     text_factory: TextFactory | None = None
     clear_payload_on_success: bool = False
+    admin_only: bool = False
 
     def preprocess(self, data: StageData) -> PreprocessResult:
         if self.logic:
@@ -47,7 +57,7 @@ class Stage:
         return PreprocessResult()
 
     def _build_text(self, data: StageData):
-        msg = [f'<b>{escape(self.title)}:</b>']
+        msg = [f'<b>{escape(self.title)}</b>']
         inner_text = ''
         if self.text_factory:
             inner_text = self.text_factory(data)
@@ -56,7 +66,7 @@ class Stage:
 
     def render_message(self, data: StageData):
         msg = self._build_text(data)
-        send_safe_message(data.chat_id, msg)
+        send_safe_message(data.user.chat_id, msg)
 
     def process(self, data: StageData) -> bool:
         if self.logic:
@@ -74,13 +84,22 @@ class SelectStage(Stage):
         keyboard = None
         if self.keyboard_builder:
             keyboard = self.keyboard_builder(self, data)
-            info(data, self, message='Built keyboard')
-        send_safe_message(data.chat_id, msg, keyboard)
+            debug(data, self, message='Built keyboard')
+        send_safe_message(data.user.chat_id, msg, keyboard)
 
 
 @dataclass(eq=False)
 class InputStage(Stage):
     validators: tuple[BaseValidator, ...] = tuple(),
+    show_back_button: bool = False
+
+    def render_message(self, data: StageData):
+        msg = self._build_text(data)
+        keyboard = None
+        if self.show_back_button:
+            keyboard = InlineKeyboardMarkup()
+            keyboard.add(build_back_button(self))
+        send_safe_message(data.user.chat_id, msg, keyboard)
 
     def process(self, data: StageData) -> bool:
         current_value = data.payload.get('value')
@@ -91,8 +110,8 @@ class InputStage(Stage):
                 current_value = validator.validate(current_value)
             data.payload['value'] = current_value
         except ValueError as exc:
-            error(data, self, message=f'Validation error from {current_validator.__class__.__name__}')
-            send_safe_message(data.chat_id, str(exc))
+            warning(data, self, message=f'Validation error from {current_validator.__class__.__name__}')
+            send_safe_message(data.user.chat_id, str(exc))
             return False
         if self.logic:
             self.logic.process(data)

@@ -1,7 +1,8 @@
 from telebot import types, TeleBot
 
-from bot.log import info, error
+from bot.log import info, error, debug, warning
 from bot.safe_sender import send_safe_message
+from entities.user import User
 from flow.callback_codec import CallbackCodec
 from db.app import Users, Persons
 from entities.party import Party
@@ -18,16 +19,17 @@ class FlowManager:
         self.menu = menu
         self.sessions = dict()
 
-    def is_allowed_user(self, chat_id: int) -> bool:
+    @staticmethod
+    def is_allowed_user(chat_id: int) -> bool:
         user_db = Users.get_user(chat_id)
         if user_db is None:
             return False
         return True
 
-    def get_session(self, chat_id: int):
+    def get_session(self, chat_id: int) -> UserSession:
         if chat_id not in self.sessions:
             self.sessions[chat_id] = UserSession(
-                chat_id=chat_id,
+                user=Users.get_user(chat_id),
                 current_stage=self.menu.start_stage,
                 party=Party(),
                 people=list(Persons.get_persons(chat_id))
@@ -36,7 +38,7 @@ class FlowManager:
 
     def _make_stage_data(self, session: UserSession) -> StageData:
         return StageData(
-            chat_id=session.chat_id,
+            user=session.user,
             people=session.people,
             party=session.party,
             payload=session.payload,
@@ -46,13 +48,13 @@ class FlowManager:
         previous_stage = session.current_stage
         session.current_stage = stage
         stage_data = self._make_stage_data(session)
-        info(stage_data, previous_stage, f'Opening stage {stage.name}...')
+        debug(stage_data, previous_stage, f'Opening stage {stage.name}...')
         result: PreprocessResult = stage.preprocess(stage_data)
         if not result.skip_current_stage:
-            prompt_data = self._make_stage_data(session)
-            stage.render_message(prompt_data)
+            data = self._make_stage_data(session)
+            stage.render_message(data)
         else:
-            info(stage_data, stage, f'Skipped stage')
+            debug(stage_data, stage, f'Skipped stage')
             self.open_stage(session, session.current_stage.default_child)
 
 
@@ -60,15 +62,13 @@ class FlowManager:
         back = False
         session = self.get_session(chat_id)
         current_stage = session.current_stage
-        if not isinstance(current_stage, SelectStage):
-            return
         data = self._make_stage_data(session)
         stage = self.menu.get_stage_by_name(callback_data)
         if stage is None:
             payload = CallbackCodec.decode_payload(callback_data)
-            info(data, current_stage, f'Got payload update from callback data = {payload}')
+            debug(data, current_stage, f'Got payload update from callback data = {payload}')
             data.payload.update(payload)
-            info(data, current_stage, f'Updated session payload from callback data. Payload = {data.payload}')
+            debug(data, current_stage, f'Updated session payload from callback data. Payload = {data.payload}')
         else:
             if current_stage.parent:
                 if current_stage.parent.name == stage.name:
@@ -79,7 +79,7 @@ class FlowManager:
                 return
             if current_stage.clear_payload_on_success:
                 data.payload.clear()
-                info(data, stage, f'Payload cleared after {stage.name}')
+                debug(data, stage, f'Payload cleared after {current_stage.name}')
         if stage is not None:
             self.open_stage(session, stage)
         else:
@@ -99,19 +99,19 @@ class FlowManager:
                 chat_id,
                 f'Неизвестное сообщение.\n{stage_text}'
             )
-            error(StageData(chat_id=chat_id), stage, f'Got unexpected input message = "{text}"')
+            warning(StageData(User(chat_id)), stage, f'Got unexpected input message = "{text}"')
             return
         else:
-            info(StageData(chat_id=chat_id), stage,f'Got input message = "{text}"')
+            debug(StageData(User(chat_id)), stage,f'Got input message = "{text}"')
         session.payload['value'] = text
         data = self._make_stage_data(session)
         success = stage.process(data)
         if not success:
             return
         else:
-            info(data, stage,f'Updated session payload from input. Payload = {data.payload}')
+            debug(data, stage,f'Updated session payload from input. Payload = {data.payload}')
         if stage.clear_payload_on_success:
             data.payload.clear()
-            info(data, stage, f'Payload cleared after {stage.name}')
+            debug(data, stage, f'Payload cleared after {stage.name}')
         if stage.children:
             self.open_stage(session, stage.default_child)

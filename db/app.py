@@ -13,7 +13,7 @@ class Users:
 
     @staticmethod
     def to_user_dto(user_db: DBUser) -> User:
-        return User(user_db.chat_id)
+        return User(user_db.chat_id, is_admin=user_db.is_admin)
 
     @staticmethod
     def create_user(chat_id: int, is_admin: bool = False) -> User | None:
@@ -24,7 +24,6 @@ class Users:
                 session.commit()
                 session.refresh(user_db)
                 info(
-                    StageData(0),
                     message=f'Создан пользователь с chat_id={chat_id} (is_admin={is_admin})'
                 )
                 return Users.to_user_dto(user_db)
@@ -52,7 +51,7 @@ class Users:
     def get_all_users() -> tuple[User, ...]:
         with SessionLocal() as session:
             users_db = select(DBUser).order_by(DBUser.chat_id)
-            users_db = list(session.scalars(users_db))
+            users_db = tuple(session.scalars(users_db))
             return tuple(Users.to_user_dto(user_db) for user_db in users_db)
 
 
