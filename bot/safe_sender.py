@@ -1,3 +1,5 @@
+from typing import Optional
+
 from bot import bot
 from telebot.apihelper import ApiTelegramException
 from requests.exceptions import ConnectTimeout, ReadTimeout, Timeout
@@ -8,14 +10,23 @@ def send_safe_message(
     text: str,
     reply_markup: InlineKeyboardMarkup | None = None,
     parse_mode: str | None = "HTML",
+    image_id: Optional[str] = None
 ):
+    params = dict(
+        chat_id=chat_id,
+        text=text,
+        reply_markup=reply_markup,
+        parse_mode=parse_mode,
+    )
+    if image_id:
+        del params['text']
+        params.update(dict(caption=text))
     try:
-        return bot.send_message(
-            chat_id,
-            text,
-            reply_markup=reply_markup,
-            parse_mode=parse_mode,
-        )
+        if not image_id:
+            return bot.send_message(**params)
+        else:
+            with open('assets/help.jpg', 'rb') as image:
+                return bot.send_photo(**params, photo=image)
 
     except (Timeout, ReadTimeout, ConnectTimeout):
         return bot.send_message(

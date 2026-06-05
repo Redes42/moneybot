@@ -5,6 +5,7 @@ from typing import Callable
 from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+from bot import bot
 from db.app import Users
 from flow.callback_codec import CallbackCodec
 from flow.stage_data import StageData
@@ -44,11 +45,12 @@ def build_delete_user_keyboard(stage: 'SelectStage', data: StageData)-> InlineKe
     keyboard = InlineKeyboardMarkup()
     users = Users.get_all_users()
     for user in users:
+        username = bot.get_chat(user.chat_id).first_name
         if user.chat_id == data.user.chat_id:
             continue
         user_data = {'user_id': user.chat_id}
         button = InlineKeyboardButton(
-            text=f'Пользователь {user.chat_id}',
+            text=f'{user.chat_id} ({username})',
             callback_data=CallbackCodec.encode_payload(user_data)
         )
         keyboard.add(button)

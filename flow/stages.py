@@ -10,6 +10,7 @@ from bot.safe_sender import send_safe_message
 from flow.stage_data import StageData
 from logic.keyboards import KeyboardBuilder, build_children_keyboard, \
     build_back_button
+from logic.image_factories import ImageFactory
 from logic.stage_logic import BaseStageLogic, PreprocessResult
 from logic.text_factories import TextFactory
 from flow.validators import BaseValidator
@@ -46,8 +47,9 @@ class Stage:
     parent: "Stage | None" = None
     children: tuple["Stage"] | None = None
     default_child: "Stage | None" = None
-    logic: BaseStageLogic | None = None
-    text_factory: TextFactory | None = None
+    logic: Optional[BaseStageLogic] | None = None
+    text_factory: Optional[TextFactory] = None
+    image_factory: Optional[ImageFactory] = None
     clear_payload_on_success: bool = False
     admin_only: bool = False
 
@@ -56,7 +58,7 @@ class Stage:
             return self.logic.preprocess(data)
         return PreprocessResult()
 
-    def _build_text(self, data: StageData):
+    def _build_text(self, data: StageData) -> str:
         msg = [f'<b>{escape(self.title)}</b>']
         inner_text = ''
         if self.text_factory:
@@ -64,9 +66,16 @@ class Stage:
         msg.append('\n' + inner_text + escape(self.text))
         return '\n'.join(msg)
 
+    def _build_image(self, data: StageData) -> Optional[str]:
+        if self.image_factory:
+            image_id = self.image_factory(data)
+            return image_id
+        return None
+
     def render_message(self, data: StageData):
         msg = self._build_text(data)
-        send_safe_message(data.user.chat_id, msg)
+        img = self._build_image(data)
+        send_safe_message(data.user.chat_id, msg, image_id=img)
 
     def process(self, data: StageData) -> bool:
         if self.logic:
@@ -81,11 +90,12 @@ class SelectStage(Stage):
 
     def render_message(self, data: StageData):
         msg = self._build_text(data)
+        img = self._build_image(data)
         keyboard = None
         if self.keyboard_builder:
             keyboard = self.keyboard_builder(self, data)
             debug(data, self, message='Built keyboard')
-        send_safe_message(data.user.chat_id, msg, keyboard)
+        send_safe_message(data.user.chat_id, msg, keyboard, image_id=img)
 
 
 @dataclass(eq=False)
@@ -95,11 +105,12 @@ class InputStage(Stage):
 
     def render_message(self, data: StageData):
         msg = self._build_text(data)
+        img = self._build_image(data)
         keyboard = None
         if self.show_back_button:
             keyboard = InlineKeyboardMarkup()
             keyboard.add(build_back_button(self))
-        send_safe_message(data.user.chat_id, msg, keyboard)
+        send_safe_message(data.user.chat_id, msg, keyboard, image_id=img)
 
     def process(self, data: StageData) -> bool:
         current_value = data.payload.get('value')

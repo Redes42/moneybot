@@ -25,6 +25,10 @@ def get_user_name(data: StageData) -> str:
     return escape(bot.get_chat(data.user.chat_id).first_name)
 
 
+def get_help(data: StageData) -> str:
+    return '!'
+
+
 def get_participants(data: StageData) -> str:
     participants = '\n'
     if data.party.participants:

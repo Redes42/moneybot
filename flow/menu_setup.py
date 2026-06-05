@@ -1,4 +1,5 @@
 from bot.log import error
+from logic.image_factories import get_help_picture
 from logic.stage_logic import (
     AddParticipantStageLogic,
     AddPersonWithCoeffLogic,
@@ -14,7 +15,7 @@ from logic.keyboards import build_add_participant_keyboard, \
     build_remove_participant_keyboard, build_remove_person_keyboard, \
     build_choices_keyboard, build_delete_user_keyboard
 from logic.text_factories import get_user_name, get_participants, \
-    get_full_calc_result, get_persons_list, get_short_calc_result
+    get_full_calc_result, get_persons_list, get_short_calc_result, get_help
 from flow.menu import Menu
 from flow.validators import NonEmptyStringValidator, \
     NonNegativeDecimalValidator, FloatValidator, IntValidator
@@ -76,6 +77,8 @@ def build_menu() -> Menu:
     help = SelectStage(
         title='Справка',
         text='Справка',
+        text_factory=get_help,
+        image_factory=get_help_picture,
         name=Stages.HELP
     )
     edit_people = SelectStage(
