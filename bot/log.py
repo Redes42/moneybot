@@ -1,39 +1,51 @@
 import logging
-from itertools import chain
+import os
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Optional
 
 from flow.stage_data import StageData
 
-logger = logging.getLogger('party_money_bot')
-log_path = 'logs'
+
+LOG_PATH = 'logs'
+
+def get_log_level() -> int:
+    log_level_env = os.getenv('LOG_LEVEL')
+    if log_level_env == 'info':
+        return logging.INFO
+    elif log_level_env == 'debug':
+        return logging.DEBUG
+    return logging.INFO
 
 def config_logger():
-    log_dir = Path(log_path)
+    log_dir = Path(LOG_PATH)
     log_dir.mkdir(exist_ok=True)
+    logger = logging.getLogger('party_money_bot')
+    logger.propagate = False
+    logger.setLevel(get_log_level())
+    formatter = logging.Formatter(
+        '%(asctime)s | '
+        '%(levelname)s | '
+        'chat_id=%(chat_id)s | '
+        'stage=%(stage)s | '
+        '%(message)s'
+    )
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
     rotating_file_handler = RotatingFileHandler(
-        f'{log_path}/party_money_bot.log',
-        maxBytes=1024*1024,
+        f'{LOG_PATH}/party_money_bot.log',
+        maxBytes=1024 * 1024,
         backupCount=3,
         encoding='utf-8'
     )
-    logging.basicConfig(
-        level=logging.INFO,
-        format=(
-            '%(asctime)s | '
-            '%(levelname)s | '
-            'chat_id=%(chat_id)s | '
-            'stage=%(stage)s | '
-            '%(message)s'
-        ),
-        handlers=[
-            logging.StreamHandler(),
-            rotating_file_handler
-        ]
-    )
+    rotating_file_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    logger.addHandler(rotating_file_handler)
+    return logger
 
-def _log(level: int, data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
+logger = config_logger()
+
+def _log(level: int, stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     if stage is None:
         stage_name = None
     else:
@@ -48,18 +60,19 @@ def _log(level: int, data: StageData | None = None, stage: Optional['Stage'] = N
     }
     logger.log(level, message, extra=log_info)
 
-def debug(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
-    _log(logging.DEBUG, data, stage, message)
+def debug(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
+    pass
+    _log(logging.DEBUG, stage, data, message)
 
-def info(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
-    _log(logging.INFO, data, stage, message)
+def info(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
+    _log(logging.INFO, stage, data, message)
 
-def error(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
-    _log(logging.ERROR, data, stage, message)
+def error(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
+    _log(logging.ERROR, stage, data, message)
 
-def warning(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
-    _log(logging.WARNING, data, stage, message)
+def warning(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
+    _log(logging.WARNING, stage, data, message)
 
-def critical(data: StageData | None = None, stage: Optional['Stage'] = None, message: str = '...'):
-    _log(logging.CRITICAL, data, stage, message)
+def critical(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
+    _log(logging.CRITICAL, stage, data, message)
 

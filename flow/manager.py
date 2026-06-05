@@ -48,13 +48,13 @@ class FlowManager:
         previous_stage = session.current_stage
         session.current_stage = stage
         stage_data = self._make_stage_data(session)
-        debug(stage_data, previous_stage, f'Opening stage {stage.name}...')
+        debug(previous_stage, stage_data, f'Opening stage {stage.name}...')
         result: PreprocessResult = stage.preprocess(stage_data)
         if not result.skip_current_stage:
             data = self._make_stage_data(session)
             stage.render_message(data)
         else:
-            debug(stage_data, stage, f'Skipped stage')
+            debug(stage, stage_data, f'Skipped stage')
             self.open_stage(session, session.current_stage.default_child)
 
 
@@ -66,24 +66,26 @@ class FlowManager:
         stage = self.menu.get_stage_by_name(callback_data)
         if stage is None:
             payload = CallbackCodec.decode_payload(callback_data)
-            debug(data, current_stage, f'Got payload update from callback data = {payload}')
-            data.payload.update(payload)
-            debug(data, current_stage, f'Updated session payload from callback data. Payload = {data.payload}')
-        else:
-            if current_stage.parent:
-                if current_stage.parent.name == stage.name:
+            if payload.get('back'):
+                if current_stage.parent:
                     back = True
-        if not back:
+                del payload['back']
+            debug(current_stage, data, f'Got payload update from callback data = {payload}')
+            data.payload.update(payload)
+            debug(current_stage, data, f'Updated session payload from callback data. Payload = {data.payload}')
+            if back:
+                self.open_stage(session, current_stage.parent)
+            else:
+                self.open_stage(session, current_stage.default_child)
+        else:
             success = current_stage.process(data)
             if not success:
                 return
             if current_stage.clear_payload_on_success:
                 data.payload.clear()
-                debug(data, stage, f'Payload cleared after {current_stage.name}')
-        if stage is not None:
+                debug(stage, data, f'Payload cleared after {current_stage.name}')
             self.open_stage(session, stage)
-        else:
-            self.open_stage(session, current_stage.default_child)
+
 
     def handle_message(self, message: types.Message) -> None:
         chat_id = message.chat.id
@@ -99,19 +101,22 @@ class FlowManager:
                 chat_id,
                 f'Неизвестное сообщение.\n{stage_text}'
             )
-            warning(StageData(User(chat_id)), stage, f'Got unexpected input message = "{text}"')
+            warning(
+                stage,
+                StageData(User(chat_id)),
+                f'Got unexpected input message = "{text}"')
             return
         else:
-            debug(StageData(User(chat_id)), stage,f'Got input message = "{text}"')
+            debug(stage, StageData(User(chat_id)), f'Got input message = "{text}"')
         session.payload['value'] = text
         data = self._make_stage_data(session)
         success = stage.process(data)
         if not success:
             return
         else:
-            debug(data, stage,f'Updated session payload from input. Payload = {data.payload}')
+            debug(stage, data, f'Updated session payload from input. Payload = {data.payload}')
         if stage.clear_payload_on_success:
             data.payload.clear()
-            debug(data, stage, f'Payload cleared after {stage.name}')
+            debug(stage, data, f'Payload cleared after {stage.name}')
         if stage.children:
             self.open_stage(session, stage.default_child)

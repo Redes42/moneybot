@@ -24,7 +24,7 @@ class Users:
                 session.commit()
                 session.refresh(user_db)
                 info(
-                    message=f'Создан пользователь с chat_id={chat_id} (is_admin={is_admin})'
+                    message=f'User created with chat_id={chat_id} (is_admin={is_admin})'
                 )
                 return Users.to_user_dto(user_db)
             except IntegrityError:

@@ -6,7 +6,6 @@ from entities.participant import Participant
 
 from decimal import Decimal
 
-from entities.person import Person
 
 @dataclass
 class MoneyTransaction:

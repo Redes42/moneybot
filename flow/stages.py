@@ -94,7 +94,7 @@ class SelectStage(Stage):
         keyboard = None
         if self.keyboard_builder:
             keyboard = self.keyboard_builder(self, data)
-            debug(data, self, message='Built keyboard')
+            debug(self, data, message='Built keyboard')
         send_safe_message(data.user.chat_id, msg, keyboard, image_id=img)
 
 
@@ -121,7 +121,11 @@ class InputStage(Stage):
                 current_value = validator.validate(current_value)
             data.payload['value'] = current_value
         except ValueError as exc:
-            warning(data, self, message=f'Validation error from {current_validator.__class__.__name__}')
+            warning(
+                self,
+                data,
+                message=f'Validation error from {current_validator.__class__.__name__}'
+            )
             send_safe_message(data.user.chat_id, str(exc))
             return False
         if self.logic:

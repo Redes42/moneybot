@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from mako.testing.helpers import result_lines
 
@@ -48,10 +48,11 @@ class Party:
 
     @property
     def participant_count(self) -> int:
-        result: int = len(self.participants)
+        result = 0
         for participant in self.participants:
-            if participant.coeff >= Decimal('1.5'):
-                result += 1
+            result += int(participant.coeff.quantize(
+                Decimal('1'), rounding=ROUND_HALF_UP)
+            )
         return result
 
     @property
