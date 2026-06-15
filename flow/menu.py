@@ -1,16 +1,9 @@
-from decimal import Decimal
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from html import escape
 
-from flow.stages import Stage, SelectStage, InputStage
+from flow.stages import Stage
 
 
-# @dataclass
-# class Relation:
-#     parent: Stage | None = None
-#     children: tuple[Stage, ...] = tuple()
-    
-    
 @dataclass
 class Menu:
     """Граф переходов"""

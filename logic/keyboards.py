@@ -1,8 +1,6 @@
 from dataclasses import dataclass
-from decimal import Decimal
 from typing import Callable
 
-from telebot import types
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from bot import bot
@@ -26,7 +24,8 @@ def build_back_button(stage: 'SelectStage') -> InlineKeyboardButton:
         callback_data=CallbackCodec.encode_payload({'back': True})
     )
 
-def build_choices_keyboard(stage: 'SelectStage', data: StageData) ->  InlineKeyboardMarkup | None:
+
+def build_choices_keyboard(stage: 'SelectStage', data: StageData) -> InlineKeyboardMarkup | None:
     keyboard = InlineKeyboardMarkup()
     choices = data.payload.get('choices')
     if choices:
@@ -42,20 +41,21 @@ def build_choices_keyboard(stage: 'SelectStage', data: StageData) ->  InlineKeyb
     return keyboard
 
 
-def build_delete_user_keyboard(stage: 'SelectStage', data: StageData)-> InlineKeyboardMarkup:
+def build_delete_user_keyboard(stage: 'SelectStage', data: StageData) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
     users = Users.get_all_users()
     for user in users:
         username = 'unknown'
         try:
             username = bot.get_chat(user.chat_id).first_name
-        except:
-            warning(stage, data, f'Failed to get username with chat_id={user.chat_id}')
+        except Exception as e:
+            warning(stage, data, f'Failed to get username with chat_id={user.chat_id} ({e})')
         if user.chat_id == data.user.chat_id:
             continue
         user_data = {'user_id': user.chat_id}
+        admin_mark = '*' if user.is_admin else ''
         button = InlineKeyboardButton(
-            text=f'{user.chat_id} ({username})',
+            text=f'{user.chat_id} ({username}){admin_mark}',
             callback_data=CallbackCodec.encode_payload(user_data)
         )
         keyboard.add(button)
@@ -80,7 +80,8 @@ def build_children_keyboard(stage: 'SelectStage', data: StageData) -> InlineKeyb
         keyboard.add(build_back_button(stage))
     return keyboard
 
-def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> InlineKeyboardMarkup:
+
+def build_add_participant_keyboard(stage: "SelectStage", data: StageData) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup(row_width=2)
     participant_ids = tuple(
         participant.person_id for participant in data.party.participants
@@ -106,7 +107,8 @@ def build_add_participant_keyboard(stage: "SelectStage", data: StageData)-> Inli
         keyboard.add(build_back_button(stage))
     return keyboard
 
-def build_remove_participant_keyboard(stage: 'SelectStage', data: StageData)-> InlineKeyboardMarkup:
+
+def build_remove_participant_keyboard(stage: 'SelectStage', data: StageData) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
     for participant in data.party.participants:
         participant_data = {'participant_id': participant.person_id}
@@ -120,7 +122,7 @@ def build_remove_participant_keyboard(stage: 'SelectStage', data: StageData)-> I
     return keyboard
 
 
-def build_remove_person_keyboard(stage: 'SelectStage', data: StageData)-> InlineKeyboardMarkup:
+def build_remove_person_keyboard(stage: 'SelectStage', data: StageData) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup()
     for person in data.people:
         person_data = {'person_id': person.id}

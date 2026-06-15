@@ -1,6 +1,6 @@
 from telebot import types, TeleBot
 
-from bot.log import info, error, debug, warning
+from bot.log import debug, warning
 from bot.safe_sender import send_safe_message
 from entities.user import User
 from flow.callback_codec import CallbackCodec
@@ -9,7 +9,7 @@ from entities.party import Party
 from flow.menu import Menu
 from flow.session import UserSession
 from flow.stage_data import StageData
-from flow.stages import InputStage, SelectStage, Stage, Stages
+from flow.stages import InputStage, Stage
 from logic.stage_logic import PreprocessResult
 
 
@@ -54,17 +54,16 @@ class FlowManager:
             data = self._make_stage_data(session)
             stage.render_message(data)
         else:
-            debug(stage, stage_data, f'Skipped stage')
+            debug(stage, stage_data, 'Skipped stage')
             self.open_stage(session, session.current_stage.default_child)
-
 
     def handle_callback(self, chat_id: int, callback_data: str) -> None:
         back = False
         session = self.get_session(chat_id)
         current_stage = session.current_stage
         data = self._make_stage_data(session)
-        stage = self.menu.get_stage_by_name(callback_data)
-        if stage is None:
+        new_stage = self.menu.get_stage_by_name(callback_data)
+        if new_stage is None:
             payload = CallbackCodec.decode_payload(callback_data)
             if payload.get('back'):
                 if current_stage.parent:
@@ -73,19 +72,19 @@ class FlowManager:
             debug(current_stage, data, f'Got payload update from callback data = {payload}')
             data.payload.update(payload)
             debug(current_stage, data, f'Updated session payload from callback data. Payload = {data.payload}')
-            if back:
-                self.open_stage(session, current_stage.parent)
-            else:
-                self.open_stage(session, current_stage.default_child)
+        if back:
+            self.open_stage(session, current_stage.parent)
+            return
+        success = current_stage.process(data)
+        if not success:
+            return
+        if current_stage.clear_payload_on_success:
+            data.payload.clear()
+            debug(new_stage, data, f'Payload cleared after {current_stage.name}')
+        if new_stage is None:
+            self.open_stage(session, current_stage.default_child)
         else:
-            success = current_stage.process(data)
-            if not success:
-                return
-            if current_stage.clear_payload_on_success:
-                data.payload.clear()
-                debug(stage, data, f'Payload cleared after {current_stage.name}')
-            self.open_stage(session, stage)
-
+            self.open_stage(session, new_stage)
 
     def handle_message(self, message: types.Message) -> None:
         chat_id = message.chat.id

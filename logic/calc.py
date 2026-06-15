@@ -57,8 +57,7 @@ def calc_result(party: Party) -> CalcResult:
                     )
                     result.final_pay.append(transaction)
                 elif over_payer.payment - rest < result.avg_payment * over_payer.coeff:
-                    lack_payer.payment += over_payer.payment - result.avg_payment * \
-                                          over_payer.coeff
+                    lack_payer.payment += over_payer.payment - result.avg_payment * over_payer.coeff
                     transaction = MoneyTransaction(
                         lack_payer,
                         over_payer,
@@ -69,5 +68,3 @@ def calc_result(party: Party) -> CalcResult:
             else:
                 break
     return result
-
-

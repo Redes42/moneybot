@@ -1,12 +1,11 @@
 from sqlalchemy import select
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError
 
 from bot.log import info
 from db.db import SessionLocal
 from db.models import DBUser, DBPerson
 from entities.user import User
 from entities.person import Person
-from flow.stage_data import StageData
 
 
 class Users:
@@ -23,9 +22,7 @@ class Users:
                 session.add(user_db)
                 session.commit()
                 session.refresh(user_db)
-                info(
-                    message=f'User created with chat_id={chat_id} (is_admin={is_admin})'
-                )
+                info(message=f'User with chat_id={chat_id} (is_admin={is_admin}) created')
                 return Users.to_user_dto(user_db)
             except IntegrityError:
                 session.rollback()
@@ -39,6 +36,7 @@ class Users:
                 return False
             session.delete(user)
             session.commit()
+            info(message=f'User with chat_id={user.chat_id} (is_admin={user.is_admin}) deleted')
             return True
 
     @staticmethod
@@ -78,7 +76,7 @@ class Persons:
                 session.commit()
                 session.refresh(person_db)
                 return Persons.to_person_dto(person_db)
-            except IntegrityError as e:
+            except IntegrityError:
                 session.rollback()
                 return None
 
@@ -113,7 +111,7 @@ class Persons:
                 person_db.name = person.name
                 session.commit()
                 return True
-            except IntegrityError as e:
+            except IntegrityError:
                 session.rollback()
                 return False
 
@@ -126,5 +124,3 @@ class Persons:
             session.delete(person_db)
             session.commit()
             return True
-
-

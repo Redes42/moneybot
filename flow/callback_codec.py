@@ -1,9 +1,8 @@
 import ast
 from decimal import Decimal
 
-from bot.safe_sender import send_safe_message
-
 CB_DELIMITER = '|'
+
 
 class CallbackCodec:
 

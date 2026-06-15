@@ -1,13 +1,14 @@
 from dataclasses import replace
 
-
 from entities.person import Person
+
 
 def get_person(people: list[Person], person_id: int) -> Person | None:
     for person in people:
         if person.id == person_id:
             return person
     return None
+
 
 def update_person_name(people: list[Person], person_id: int, new_name: str) -> None:
     for index, person in enumerate(people):

@@ -5,6 +5,7 @@ from telebot.apihelper import ApiTelegramException
 from requests.exceptions import ConnectTimeout, ReadTimeout, Timeout
 from telebot.types import InlineKeyboardMarkup
 
+
 def send_safe_message(
     chat_id: int,
     text: str,

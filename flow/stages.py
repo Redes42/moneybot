@@ -5,7 +5,7 @@ from typing import Optional
 
 from telebot.types import InlineKeyboardMarkup
 
-from bot.log import error, info, debug, warning
+from bot.log import debug, warning
 from bot.safe_sender import send_safe_message
 from flow.stage_data import StageData
 from logic.keyboards import KeyboardBuilder, build_children_keyboard, \
@@ -14,6 +14,7 @@ from logic.image_factories import ImageFactory
 from logic.stage_logic import BaseStageLogic, PreprocessResult
 from logic.text_factories import TextFactory
 from flow.validators import BaseValidator
+
 
 class Stages(StrEnum):
     START = 'start'
@@ -52,6 +53,7 @@ class Stage:
     image_factory: Optional[ImageFactory] = None
     clear_payload_on_success: bool = False
     admin_only: bool = False
+    button_caption: str | None = None
 
     def preprocess(self, data: StageData) -> PreprocessResult:
         if self.logic:
@@ -86,7 +88,6 @@ class Stage:
 @dataclass(eq=False)
 class SelectStage(Stage):
     keyboard_builder: KeyboardBuilder | None = build_children_keyboard
-    button_caption: str | None = None
 
     def render_message(self, data: StageData):
         msg = self._build_text(data)

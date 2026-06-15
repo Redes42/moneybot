@@ -30,4 +30,3 @@ class Participant:
 
     def with_coeff_and_payment(self):
         return f'{self.name} ({self.coeff}, {self.payment} руб.)'
-

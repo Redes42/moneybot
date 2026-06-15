@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
-from bot.log import info
-from entities.people_ops import update_person_coeff, update_person_name, get_person
+from bot.log import info, debug
+from entities.people_ops import get_person
 from db.app import Persons, Users
 from entities.person import Person
 from flow.stage_data import StageData
@@ -12,6 +12,7 @@ from logic.keyboards import Choice
 @dataclass
 class PreprocessResult:
     skip_current_stage: bool = False
+
 
 class BaseStageLogic:
     """
@@ -91,8 +92,6 @@ class AddParticipantStageLogic(BaseStageLogic):
         success = data.party.add_participant(person)
         if not success:
             raise ValueError('Участник уже добавлен!')
-        else:
-            info(data=data, message=f'Added participant')
 
 
 class SetCoeffLogic(BaseStageLogic):
@@ -118,6 +117,12 @@ class SetPaymentLogic(BaseStageLogic):
         participant_id = data.payload['participant_id']
         participant = data.party.get_participant(participant_id)
         participant.payment = Decimal(payment)
+        debug(
+            data=data,
+            message=f'Added participant id={participant_id}, '
+                    f'coeff={participant.coeff}, '
+                    f'payment={participant.payment}'
+        )
 
 
 class RemoveParticipantStageLogic(BaseStageLogic):
@@ -128,11 +133,8 @@ class RemoveParticipantStageLogic(BaseStageLogic):
         success = data.party.remove_participant(int(participant_id))
         if not success:
             raise ValueError('Участник не найден!')
-
-
-class AddPersonWithCoeffLogic(BaseStageLogic):
-    def preprocess(self, data: StageData) -> PreprocessResult:
-        return PreprocessResult(skip_current_stage=True)
+        else:
+            debug(data=data, message=f'Deleted participant id={participant_id}')
 
 
 class AddPersonWithoutCoeffLogic(BaseStageLogic):
@@ -156,6 +158,12 @@ class SetPersonCoeffLogic(BaseStageLogic):
         person = Person(0, data.payload['name'], data.payload['coeff'])
         person = Persons.create_person(data.user.chat_id, person)
         data.people.append(person)
+        info(
+            data=data,
+            message=f'Added person to database: id={person.id}, '
+                    f'name={person.name}, '
+                    f'coeff={person.coeff}'
+        )
 
     def preprocess(self, data: StageData) -> PreprocessResult:
         if 'coeff' in data.payload:
@@ -176,3 +184,7 @@ class RemovePersonLogic(BaseStageLogic):
         person = get_person(data.people, person_id)
         data.people.remove(person)
         Persons.delete_person(person)
+        info(
+            data=data,
+            message=f'Deleted person id={person.id}, name={person.name} from database'
+        )

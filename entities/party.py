@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_HALF_UP
 
-from mako.testing.helpers import result_lines
-
 from entities.person import Person
 from entities.participant import Participant
+
 
 @dataclass
 class Party:
@@ -36,7 +35,7 @@ class Party:
         for participant in self.participants:
             if participant.person_id == person_id:
                 return participant
-        raise ValueError("Участник не найден")
+        raise ValueError('Участник не найден')
 
     def remove_participant(self, participant_id: int) -> bool:
         participant = self.get_participant(participant_id)

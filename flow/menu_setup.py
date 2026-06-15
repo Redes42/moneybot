@@ -2,7 +2,6 @@ from bot.log import error
 from logic.image_factories import get_help_picture
 from logic.stage_logic import (
     AddParticipantStageLogic,
-    AddPersonWithCoeffLogic,
     SetCoeffLogic,
     SetPaymentLogic,
     ClearPartyLogic, SkipStageLogic, RemoveParticipantStageLogic,
@@ -17,39 +16,37 @@ from logic.keyboards import build_add_participant_keyboard, \
 from logic.text_factories import get_user_name, get_participants, \
     get_full_calc_result, get_persons_list, get_short_calc_result, get_help
 from flow.menu import Menu
-from flow.validators import NonEmptyStringValidator, \
-    NonNegativeDecimalValidator, FloatValidator, IntValidator
+from flow.validators import NonEmptyStringValidator, NonNegativeDecimalValidator, IntValidator
 
 
 def build_menu() -> Menu:
-
+    """🎉💰➡️➡️🙌👉👇➕➖☝️📋✅🧮➗✖️🟰❓❔🙋🙋‍♀️🙋‍♂️🎚️⚙️ 📇📝⏪"""
     start = SelectStage(
-        title='Бот для взаиморасчётов по деньгам, потраченным на вечеринку',
-        text=', добро пожаловать!',
+        title='Бот для взаиморасчётов по деньгам,\nпотраченным на вечеринку',
+        text=', добро пожаловать! 🎉',
         name=Stages.START,
         text_factory=get_user_name,
     )
     main_menu = SelectStage(
-        title='Главное меню',
-        text='Выберите действие:',
+        title='📋 Главное меню',
+        text='👇 Выберите действие:',
         name=Stages.MAIN_MENU,
         logic=ClearPartyLogic()
     )
     admin_menu = SelectStage(
-        title='Меню администратора',
-        text='Выберите действие:',
+        title='⚙️ Меню администратора',
+        text='👇 Выберите действие:',
         name=Stages.ADMIN_MENU,
         admin_only=True
     )
     create_user = SelectStage(
-        title='Создать пользователя',
-        text='',
+        title='➕ Создать пользователя',
         name=Stages.CREATE_USER,
         logic=SkipStageLogic(),
         admin_only=True
     )
     define_chat_id = InputStage(
-        title='Укажите chat_id:',
+        title='👉 Укажите chat_id:',
         text='Формат ввода - целое число',
         name=Stages.DEFINE_CHAT_ID,
         logic=DefineChatIdStageLogic(),
@@ -57,8 +54,8 @@ def build_menu() -> Menu:
         admin_only=True
     )
     choose_is_admin = SelectStage(
-        title='Выберите, будет ли пользователь администратором',
-        text='',
+        title='🙌 Права пользователя',
+        text='👇 Выберите, будет ли пользователь администратором',
         name=Stages.CHOOSE_IS_ADMIN,
         keyboard_builder=build_choices_keyboard,
         logic=ChooseIsAdminStageLogic(),
@@ -66,108 +63,109 @@ def build_menu() -> Menu:
         clear_payload_on_success=True
     )
     delete_user = SelectStage(
-        title='Удалить пользователя',
-        text='Выберите пользователя:',
+        title='➖ Удаление пользователя',
+        button_caption='➖ Удалить пользователя',
+        text='👇 Выберите пользователя',
         name=Stages.DELETE_USER,
         keyboard_builder=build_delete_user_keyboard,
         logic=DeleteUserStageLogic(),
         admin_only=True,
         clear_payload_on_success=True
     )
+    # clear_logs
     help = SelectStage(
-        title='Справка',
-        text='Справка',
+        title='❔ Справка',
         text_factory=get_help,
         image_factory=get_help_picture,
         name=Stages.HELP
     )
     edit_people = SelectStage(
-        title='Редактирование базы людей',
-        text='Выберите действие:',
+        title='📇 Редактирование базы людей',
+        text='👇 Выберите действие:',
         text_factory=get_persons_list,
         name=Stages.EDIT_PEOPLE,
     )
     add_person_with_coeff = SelectStage(
-        title='Добавить человека с вводом коэффициента',
-        text='Введите имя человека',
+        title='➕ Добавить человека с вводом коэффициента',
         name=Stages.ADD_PERSON_WITH_COEFF,
-        logic=AddPersonWithCoeffLogic(),
+        logic=SkipStageLogic(),
     )
     add_person_wo_coeff = SelectStage(
-        title='Добавить человека с коэффициентом 1.0',
-        text='Введите имя человека',
+        title='➕ Добавить человека с коэффициентом 1.0',
         name=Stages.ADD_PERSON_WO_COEFF,
         logic=AddPersonWithoutCoeffLogic(),
     )
     define_person_name = InputStage(
-        title='Добавить нового человека',
-        text='Введите имя человека',
+        title='📝 Указание имени',
+        text='👉 Введите имя человека',
         name=Stages.DEFINE_PERSON_NAME,
         logic=SetPersonNameLogic(),
         validators=(NonEmptyStringValidator(),),
         show_back_button=True
     )
     define_person_coeff = InputStage(
-        title='Добавить человека',
-        text='Введите коэффицент человека',
+        title='✖ Указание коэффициента',
+        text='👉 Введите коэффицент человека',
         name=Stages.DEFINE_PERSON_COEFF,
         logic=SetPersonCoeffLogic(),
         validators=(NonEmptyStringValidator(),),
         clear_payload_on_success=True
     )
     remove_person = SelectStage(
-        title='Удалить человека',
-        text='Выберите человека, которого необходимо удалить из базы',
+        title='➖ Удалить человека',
+        text='👇 Выберите человека для удаления из базы',
         name=Stages.REMOVE_PERSON,
         logic=RemovePersonLogic(),
         keyboard_builder=build_remove_person_keyboard,
         clear_payload_on_success=True
     )
     current_party = SelectStage(
-        title='Текущая вечеринка',
-        button_caption='Новая вечеринка',
+        title='🎉 Текущая вечеринка 🍕',
+        button_caption='🎉 Новая вечеринка',
         text_factory=get_participants,
         text='Добавьте ещё участников или переходите к расчёту',
         name=Stages.CURRENT_PARTY,
     )
     add_participant = SelectStage(
-        title='Добавление участников на вечеринку',
-        text='Выберите участников из сохранённого списка\nили отредактируйте базу людей:',
+        title='🥳 Добавление участников на вечеринку',
+        button_caption='➕ Добавить участника',
+        text='👇 Выберите участников из сохранённого списка\nили отредактируйте базу людей',
         name=Stages.ADD_PARTICIPANT,
         logic=AddParticipantStageLogic(),
         keyboard_builder=build_add_participant_keyboard,
     )
     define_participant_coeff = InputStage(
-        title='Укажите коэффициент для участника:',
-        text='В формате дробного числа, например 1.0 (это 100%) или 0.5 (это 50%) или 2.0 (это 200%)'
+        title='✖ Укажите коэффициент для участника:',
+        text='👉 В формате дробного числа, например 1.0 (это 100%) или 0.5 (это 50%) или 2.0 (это 200%)'
              'Обычно используется 100%, 200% нужны для семей из двух человек, 50 - для тех кто мало ел',
         name=Stages.DEFINE_PARTICIPANT_COEFF,
         logic=SetCoeffLogic(),
         validators=(NonNegativeDecimalValidator(),)
     )
     define_participant_payment = InputStage(
-        title='Укажите платёж участника:',
-        text='В формате дробного числа, например 123.56',
+        title='💰 Укажите платёж участника:',
+        text='👉 В формате дробного числа, например 123.56',
         name=Stages.DEFINE_PARTICIPANT_PAYMENT,
         logic=SetPaymentLogic(),
         validators=(NonNegativeDecimalValidator(),),
         clear_payload_on_success=True
     )
     remove_participant = SelectStage(
-        title='Удаление участника вечеринки',
-        text='Выберите участника, которого необходимо исключить',
+        title='➖ Удаление участника вечеринки',
+        button_caption='➖ Удалить участника',
+        text='👇 Выберите участника, которого необходимо исключить',
         name=Stages.REMOVE_PARTICIPANT,
         logic=RemoveParticipantStageLogic(),
-        keyboard_builder = build_remove_participant_keyboard,
+        keyboard_builder=build_remove_participant_keyboard,
         clear_payload_on_success=True
     )
     calc_result_full = SelectStage(
-        title='Итоговый расчёт (полный):',
+        title='🧮 Итоговый расчёт (полный)',
         text_factory=get_full_calc_result,
         name=Stages.CALC_RESULT_FULL
     )
     calc_result_short = SelectStage(
-        title='Итоговый расчёт (краткий):',
+        title='📝 Итоговый расчёт (краткий)',
         text_factory=get_short_calc_result,
         name=Stages.CALC_RESULT_SHORT
     )

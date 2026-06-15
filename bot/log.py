@@ -9,6 +9,7 @@ from flow.stage_data import StageData
 
 LOG_PATH = 'logs'
 
+
 def get_log_level() -> int:
     log_level_env = os.getenv('LOG_LEVEL')
     if log_level_env == 'info':
@@ -16,6 +17,7 @@ def get_log_level() -> int:
     elif log_level_env == 'debug':
         return logging.DEBUG
     return logging.INFO
+
 
 def config_logger():
     log_dir = Path(LOG_PATH)
@@ -35,6 +37,7 @@ def config_logger():
     rotating_file_handler = RotatingFileHandler(
         f'{LOG_PATH}/party_money_bot.log',
         maxBytes=1024 * 1024,
+        mode='w',
         backupCount=3,
         encoding='utf-8'
     )
@@ -43,7 +46,9 @@ def config_logger():
     logger.addHandler(rotating_file_handler)
     return logger
 
+
 logger = config_logger()
+
 
 def _log(level: int, stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     if stage is None:
@@ -60,19 +65,23 @@ def _log(level: int, stage: Optional['Stage'] = None, data: StageData | None = N
     }
     logger.log(level, message, extra=log_info)
 
+
 def debug(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     pass
     _log(logging.DEBUG, stage, data, message)
 
+
 def info(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     _log(logging.INFO, stage, data, message)
+
 
 def error(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     _log(logging.ERROR, stage, data, message)
 
+
 def warning(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     _log(logging.WARNING, stage, data, message)
 
+
 def critical(stage: Optional['Stage'] = None, data: StageData | None = None, message: str = '...'):
     _log(logging.CRITICAL, stage, data, message)
-
