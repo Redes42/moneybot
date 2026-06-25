@@ -73,6 +73,7 @@ class FlowManager:
             data.payload.update(payload)
             debug(current_stage, data, f'Updated session payload from callback data. Payload = {data.payload}')
         if back:
+            data.payload.clear()
             self.open_stage(session, current_stage.parent)
             return
         success = current_stage.process(data)
