@@ -138,7 +138,7 @@ def build_menu() -> Menu:
         title='🎉 Текущая вечеринка 🍕',
         button_caption='🎉 Новая вечеринка',
         text_factory=get_participants,
-        text='Добавьте (ещё) участников или переходите к расчёту',
+        text='Добавьте (ещё) участников\nили переходите к расчёту',
         name=Stages.CURRENT_PARTY,
     )
     add_participant = SelectStage(
@@ -151,8 +151,7 @@ def build_menu() -> Menu:
     )
     define_participant_coeff = InputStage(
         title='✖ Укажите коэффициент для участника:',
-        text='👉 В формате дробного числа, например 1.0 (это 100%) или 0.5 (это 50%) или 2.0 (это 200%)'
-             'Обычно используется 100%, 200% нужны для семей из двух человек, 50 - для тех кто мало ел',
+        text='👉 В формате дробного числа, например 1.0 (это 100%) или 0.5 (это 50%) или 2.0 (это 200%)',
         name=Stages.DEFINE_PARTICIPANT_COEFF,
         logic=SetCoeffLogic(),
         validators=(NonNegativeDecimalValidator(),)
