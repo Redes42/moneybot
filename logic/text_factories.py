@@ -17,7 +17,7 @@ tab = '    '
 
 def get_persons_list(data: StageData) -> str:
     if not data.people:
-        return '<i>База людей пуста</i>'
+        return '<i>База людей пуста</i>\n\n'
     else:
         people = '<b>Уже в базе:</b>\n'
         for person in data.people:
