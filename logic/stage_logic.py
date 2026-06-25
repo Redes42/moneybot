@@ -137,7 +137,7 @@ class RemoveParticipantStageLogic(BaseStageLogic):
             debug(data=data, message=f'Deleted participant id={participant_id}')
 
 
-class AddPersonWithoutCoeffLogic(BaseStageLogic):
+class AddPersonWithDefaultCoeffStartLogic(BaseStageLogic):
     def preprocess(self, data: StageData) -> PreprocessResult:
         data.payload['coeff'] = Decimal('1.0')
         return PreprocessResult(skip_current_stage=True)
@@ -152,7 +152,9 @@ class SetPersonNameLogic(BaseStageLogic):
 
 
 class SetPersonCoeffLogic(BaseStageLogic):
-    def add_person(self, data: StageData):
+
+    @staticmethod
+    def add_person(data: StageData):
         if 'name' not in data.payload:
             raise ValueError('Не указано имя участника')
         person = Person(0, data.payload['name'], data.payload['coeff'])
@@ -174,6 +176,14 @@ class SetPersonCoeffLogic(BaseStageLogic):
     def process(self, data: StageData) -> None:
         data.payload['coeff'] = data.payload.get('value')
         self.add_person(data)
+
+
+class AddPersonWithDefaultCoeffFinishLogic(BaseStageLogic):
+    def preprocess(self, data: StageData) -> PreprocessResult:
+        SetPersonCoeffLogic.add_person(data)
+        if data.payload.get('coeff'):
+            data.payload.pop('coeff')
+        return PreprocessResult(skip_current_stage=True)
 
 
 class RemovePersonLogic(BaseStageLogic):

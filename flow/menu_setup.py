@@ -6,8 +6,9 @@ from logic.stage_logic import (
     SetPaymentLogic,
     ClearPartyLogic, SkipStageLogic, RemoveParticipantStageLogic,
     SetPersonCoeffLogic, SetPersonNameLogic, RemovePersonLogic,
-    AddPersonWithoutCoeffLogic, DefineChatIdStageLogic, ChooseIsAdminStageLogic,
-    DeleteUserStageLogic,
+    AddPersonWithDefaultCoeffStartLogic, DefineChatIdStageLogic,
+    ChooseIsAdminStageLogic,
+    DeleteUserStageLogic, AddPersonWithDefaultCoeffFinishLogic,
 )
 from flow.stages import Stages, InputStage, SelectStage
 from logic.keyboards import build_add_participant_keyboard, \
@@ -16,7 +17,8 @@ from logic.keyboards import build_add_participant_keyboard, \
 from logic.text_factories import get_user_name, get_participants, \
     get_full_calc_result, get_persons_list, get_short_calc_result, get_help
 from flow.menu import Menu
-from flow.validators import NonEmptyStringValidator, NonNegativeDecimalValidator, IntValidator
+from flow.validators import NonEmptyStringValidator, \
+    NonNegativeDecimalValidator, IntValidator, DecimalValidator
 
 
 def build_menu() -> Menu:
@@ -79,21 +81,34 @@ def build_menu() -> Menu:
         image_factory=get_help_picture,
         name=Stages.HELP
     )
-    edit_people = SelectStage(
+    edit_persons = SelectStage(
         title='📇 Редактирование базы людей',
+        button_caption='📇 База людей',
         text='👇 Выберите действие:',
         text_factory=get_persons_list,
         name=Stages.EDIT_PEOPLE,
     )
     add_person_with_coeff = SelectStage(
-        title='➕ Добавить человека с вводом коэффициента',
+        title='➕ Добавить человека с вводом к-та',
         name=Stages.ADD_PERSON_WITH_COEFF,
         logic=SkipStageLogic(),
     )
-    add_person_wo_coeff = SelectStage(
-        title='➕ Добавить человека с коэффициентом 1.0',
-        name=Stages.ADD_PERSON_WO_COEFF,
-        logic=AddPersonWithoutCoeffLogic(),
+    add_person_with_default_coeff_start = SelectStage(
+        title='➕ Добавить человека с к-том 1.0',
+        name=Stages.ADD_PERSON_WITH_DEFAULT_COEFF_START,
+        logic=AddPersonWithDefaultCoeffStartLogic(),
+    )
+    define_only_person_name = InputStage(
+        title='📝 Указание имени',
+        text='👉 Введите имя человека',
+        name=Stages.DEFINE_PERSON_NAME,
+        logic=SetPersonNameLogic(),
+        validators=(NonEmptyStringValidator(),),
+        show_back_button=True
+    )
+    add_person_with_default_coeff_finish = SelectStage(
+        name=Stages.ADD_PERSON_WITH_DEFAULT_COEFF_FINISH,
+        logic=AddPersonWithDefaultCoeffFinishLogic(),
     )
     define_person_name = InputStage(
         title='📝 Указание имени',
@@ -108,12 +123,12 @@ def build_menu() -> Menu:
         text='👉 Введите коэффицент человека',
         name=Stages.DEFINE_PERSON_COEFF,
         logic=SetPersonCoeffLogic(),
-        validators=(NonEmptyStringValidator(),),
+        validators=(DecimalValidator(),),
         clear_payload_on_success=True
     )
     remove_person = SelectStage(
         title='➖ Удалить человека',
-        text='👇 Выберите человека для удаления из базы',
+        text='👇 Выберите, кого удалить из базы',
         name=Stages.REMOVE_PERSON,
         logic=RemovePersonLogic(),
         keyboard_builder=build_remove_person_keyboard,
@@ -123,13 +138,13 @@ def build_menu() -> Menu:
         title='🎉 Текущая вечеринка 🍕',
         button_caption='🎉 Новая вечеринка',
         text_factory=get_participants,
-        text='Добавьте ещё участников или переходите к расчёту',
+        text='Добавьте (ещё) участников или переходите к расчёту',
         name=Stages.CURRENT_PARTY,
     )
     add_participant = SelectStage(
         title='🥳 Добавление участников на вечеринку',
         button_caption='➕ Добавить участника',
-        text='👇 Выберите участников из сохранённого списка\nили отредактируйте базу людей',
+        text='👇 Выберите участников из сохранённого списка.\nЕсли он пуст, то вернитесь к предыдущему\nшагу и отредактируйте базу людей.',
         name=Stages.ADD_PARTICIPANT,
         logic=AddParticipantStageLogic(),
         keyboard_builder=build_add_participant_keyboard,
@@ -172,7 +187,7 @@ def build_menu() -> Menu:
 
     start.children = (main_menu, admin_menu, help)
     main_menu.parent = start
-    main_menu.children = (current_party, edit_people)
+    main_menu.children = (current_party, edit_persons)
     admin_menu.parent = start
     admin_menu.children = (create_user, delete_user)
     create_user.parent = admin_menu
@@ -182,19 +197,22 @@ def build_menu() -> Menu:
     delete_user.parent = admin_menu
     delete_user.children = (admin_menu, )
     help.parent = start
-    edit_people.parent = main_menu
-    edit_people.children = (
+    edit_persons.parent = main_menu
+    edit_persons.children = (
         add_person_with_coeff,
-        add_person_wo_coeff,
+        add_person_with_default_coeff_start,
         remove_person
     )
     add_person_with_coeff.children = (define_person_name, )
-    add_person_wo_coeff.children = (define_person_name, )
-    define_person_name.parent = edit_people
+    add_person_with_default_coeff_start.children = (define_only_person_name, )
+    define_only_person_name.parent = edit_persons
+    define_only_person_name.children = (add_person_with_default_coeff_finish, )
+    add_person_with_default_coeff_finish.children = (add_person_with_default_coeff_start,)
+    define_person_name.parent = edit_persons
     define_person_name.children = (define_person_coeff, )
-    define_person_coeff.children = (add_person_wo_coeff, )
-    remove_person.parent = edit_people
-    remove_person.children = (edit_people, )
+    define_person_coeff.children = (define_person_name, )
+    remove_person.parent = edit_persons
+    remove_person.children = (edit_persons, )
     current_party.parent = main_menu
     current_party.children = (
         add_participant, remove_participant, calc_result_full, calc_result_short
@@ -205,6 +223,8 @@ def build_menu() -> Menu:
     define_participant_payment.children = (current_party, )
     remove_participant.parent = current_party
     remove_participant.children = (current_party, )
+    calc_result_full.parent = current_party
+    calc_result_short.parent = current_party
     calc_result_full.children = (main_menu, )
     calc_result_short.children = (main_menu,)
 
@@ -219,9 +239,11 @@ def build_menu() -> Menu:
             choose_is_admin,
             delete_user,
             help,
-            edit_people,
+            edit_persons,
             add_person_with_coeff,
-            add_person_wo_coeff,
+            add_person_with_default_coeff_start,
+            define_only_person_name,
+            add_person_with_default_coeff_finish,
             define_person_name,
             define_person_coeff,
             remove_person,
