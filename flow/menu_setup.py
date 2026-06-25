@@ -138,7 +138,7 @@ def build_menu() -> Menu:
         title='🎉 Текущая вечеринка 🍕',
         button_caption='🎉 Новая вечеринка',
         text_factory=get_participants,
-        text='Добавьте (ещё) участников\nили переходите к расчёту',
+        text='👇 Добавьте (ещё) участников\nили переходите к расчёту',
         name=Stages.CURRENT_PARTY,
     )
     add_participant = SelectStage(
